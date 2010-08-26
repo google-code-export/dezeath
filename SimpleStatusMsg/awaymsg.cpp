@@ -352,7 +352,7 @@ static int AwayMsgPreBuildMenu(WPARAM wParam, LPARAM lParam)
 	}
 	CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hAwayMsgMenuItem, (LPARAM)&clmi);
 	CallService(MS_SKIN2_RELEASEICON, (WPARAM)clmi.hIcon, (LPARAM)0);
-	clmi.flags = CMIM_FLAGS | CMIM_NAME | CMIF_TCHAR;
+	clmi.flags = CMIM_FLAGS | CMIF_HIDDEN | CMIF_TCHAR;
 
 	if (!chatRoom)
 	{
@@ -373,13 +373,15 @@ static int AwayMsgPreBuildMenu(WPARAM wParam, LPARAM lParam)
 		}
 		DBFreeVariant(&dbv);
 
-		if (!DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ShowCopy", 1) || !lstrlenA(smsg))
-			clmi.flags |= CMIF_HIDDEN;
-
-		mir_sntprintf(str, SIZEOF(str), TranslateT("Copy %s Message"), (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, status, GCMDF_TCHAR));
-		clmi.ptszName = str;
+		if (DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ShowCopy", 1) && lstrlenA(smsg))
+		{
+			clmi.flags = CMIM_FLAGS | CMIM_NAME | CMIF_TCHAR;
+			mir_sntprintf(str, SIZEOF(str), TranslateT("Copy %s Message"), (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, status, GCMDF_TCHAR));
+			clmi.ptszName = str;
+		}
 	}
 	CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hCopyMsgMenuItem, (LPARAM)&clmi);
+	clmi.flags = CMIM_FLAGS | CMIF_HIDDEN | CMIF_TCHAR;
 
 	if (!chatRoom)
 	{
@@ -390,8 +392,8 @@ static int AwayMsgPreBuildMenu(WPARAM wParam, LPARAM lParam)
 			if (surl == NULL)
 				surl = strstr(smsg, "http://");
 		}
-		if (surl == NULL)
-			clmi.flags |= CMIF_HIDDEN;
+		if (surl != NULL)
+			clmi.flags = CMIM_FLAGS | CMIM_NAME | CMIF_TCHAR;
 		mir_free(smsg);
 
 		mir_sntprintf(str, SIZEOF(str), TranslateT("&Go to URL in %s Message"), (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, status, GCMDF_TCHAR));
