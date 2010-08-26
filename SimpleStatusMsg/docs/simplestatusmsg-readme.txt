@@ -6,7 +6,7 @@
 Description
 -----------
 Simple Status Message provides a simple way to set status and away messages in Miranda IM.
-The plugin was previosly named SimpleAway, but has been renamed to better reflect its purpose.
+The plugin was previously named SimpleAway, but has been renamed to better reflect its purpose.
 The SimpleAway plugin was originally created by Harven.
 
 Main features:
