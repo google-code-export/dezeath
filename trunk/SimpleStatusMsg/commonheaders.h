@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-// to enable all 0.8.0 core functions
-#define MIRANDA_VER 0x0800
+// to enable all 0.9.0 core functions
+#define MIRANDA_VER 0x0900
 
 #define _WIN32_IE 0x0501
 
@@ -47,12 +47,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <m_protoint.h>
 #include <win2k.h>
 
-#include "sdk/m_variables.h"
-#include "sdk/m_toptoolbar.h"
-#include "sdk/m_toolbar.h"
 #include "sdk/m_fortunemsg.h"
 #include "sdk/m_statusplugins.h"
-#include "m_simplestatusmsg.h"
+#include "sdk/m_toolbar.h"
+#include "sdk/m_toptoolbar.h"
+#include "sdk/m_updater.h"
+#include "sdk/m_variables.h"
 #include "m_simpleaway.h"
+#include "m_simplestatusmsg.h"
 
 #include "resource.h"
