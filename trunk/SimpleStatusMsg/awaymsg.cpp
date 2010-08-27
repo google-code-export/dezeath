@@ -284,42 +284,41 @@ static INT_PTR CopyAwayMsgCommand(WPARAM wParam, LPARAM)
 static INT_PTR GoToURLMsgCommand(WPARAM wParam, LPARAM lParam)
 {
 	DBVARIANT dbv;
-	char *smsg;
-
+	char *szMsg;
 #ifdef _UNICODE
 	int unicode = !DBGetContactSetting((HANDLE)wParam, "CList", "StatusMsg", &dbv) && (dbv.type == DBVT_UTF8 || dbv.type == DBVT_WCHAR);
 	DBFreeVariant(&dbv);
 	if (unicode)
 	{
 		DBGetContactSettingWString((HANDLE)wParam, "CList", "StatusMsg", &dbv);
-		smsg = mir_u2a(dbv.pwszVal);
+		szMsg = mir_u2a(dbv.pwszVal);
 	}
 	else
 #endif
 	{
 		DBGetContactSettingString((HANDLE)wParam, "CList", "StatusMsg", &dbv);
-		smsg = mir_strdup(dbv.pszVal);
+		szMsg = mir_strdup(dbv.pszVal);
 	}
 	DBFreeVariant(&dbv);
 
-	if (lstrlenA(smsg))
+	if (lstrlenA(szMsg))
 	{
-		char *surl = strstr(smsg, "www.");
-		if (surl == NULL)
-			surl = strstr(smsg, "http://");
-		if (surl != NULL)
+		char *szURL = strstr(szMsg, "www.");
+		if (szURL == NULL)
+			szURL = strstr(szMsg, "http://");
+		if (szURL != NULL)
 		{
 			int i;
-			for (i = 0; surl[i] != ' ' && surl[i] != '\n' && surl[i] != '\r' &&
-				surl[i] != '\t' && surl[i] != '\0'; i++);
+			for (i = 0; szURL[i] != ' ' && szURL[i] != '\n' && szURL[i] != '\r' &&
+				szURL[i] != '\t' && szURL[i] != '\0'; i++);
 
-			char *smsgurl = (char *)mir_alloc(i + 1);
-			lstrcpynA(smsgurl, surl, i + 1);
-			CallService(MS_UTILS_OPENURL, (WPARAM)1, (LPARAM)smsgurl);
-			mir_free(smsgurl);
+			char *szMsgURL = (char *)mir_alloc(i + 1);
+			lstrcpynA(szMsgURL, szURL, i + 1);
+			CallService(MS_UTILS_OPENURL, (WPARAM)1, (LPARAM)szMsgURL);
+			mir_free(szMsgURL);
 		}
 	}
-	mir_free(smsg);
+	mir_free(szMsg);
 
 	return 0;
 }
@@ -328,25 +327,27 @@ static int AwayMsgPreBuildMenu(WPARAM wParam, LPARAM lParam)
 {
 	CLISTMENUITEM clmi = {0};
 	TCHAR str[128];
-	int status;
 	char *szProto = (char *)CallService(MS_PROTO_GETCONTACTBASEPROTO, wParam, 0);
-	int chatRoom = szProto ? DBGetContactSettingByte((HANDLE)wParam, szProto, "ChatRoom", 0) : 0;
-	char *smsg;
+	int iHidden = szProto ? DBGetContactSettingByte((HANDLE)wParam, szProto, "ChatRoom", 0) : 0;
+	char *szMsg;
+	int iStatus;
 
 	clmi.cbSize = sizeof(clmi);
 	clmi.flags = CMIM_FLAGS | CMIF_HIDDEN | CMIF_TCHAR;
-	
-	if (!chatRoom)
+
+	if (!iHidden)
 	{
-		status = DBGetContactSettingWord((HANDLE)wParam, szProto, "Status", ID_STATUS_OFFLINE);
-		mir_sntprintf(str, SIZEOF(str), TranslateT("Re&ad %s Message"), (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, status, GCMDF_TCHAR));
-		clmi.ptszName = str;
+		iHidden = 1;
+		iStatus = DBGetContactSettingWord((HANDLE)wParam, szProto, "Status", ID_STATUS_OFFLINE);
 		if (CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_1,0) & PF1_MODEMSGRECV)
 		{
-			if (CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_3,0) & Proto_Status2Flag(status == ID_STATUS_OFFLINE ? ID_STATUS_INVISIBLE : status))
+			if (CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_3,0) & Proto_Status2Flag(iStatus == ID_STATUS_OFFLINE ? ID_STATUS_INVISIBLE : iStatus))
 			{
+				iHidden = 0;
 				clmi.flags = CMIM_FLAGS | CMIM_NAME | CMIM_ICON | CMIF_TCHAR;
-				clmi.hIcon = LoadSkinnedProtoIcon(szProto, status);
+				clmi.hIcon = LoadSkinnedProtoIcon(szProto, iStatus);
+				mir_sntprintf(str, SIZEOF(str), TranslateT("Re&ad %s Message"), (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, iStatus, GCMDF_TCHAR));
+				clmi.ptszName = str;
 			}
 		}
 	}
@@ -354,50 +355,50 @@ static int AwayMsgPreBuildMenu(WPARAM wParam, LPARAM lParam)
 	CallService(MS_SKIN2_RELEASEICON, (WPARAM)clmi.hIcon, (LPARAM)0);
 	clmi.flags = CMIM_FLAGS | CMIF_HIDDEN | CMIF_TCHAR;
 
-	if (!chatRoom)
+	if (!iHidden)
 	{
 		DBVARIANT dbv;
-
 #ifdef _UNICODE
 		int unicode = !DBGetContactSetting((HANDLE)wParam, "CList", "StatusMsg", &dbv) && (dbv.type == DBVT_UTF8 || dbv.type == DBVT_WCHAR);
 		DBFreeVariant(&dbv);
 		if (unicode)
 		{
 			DBGetContactSettingWString((HANDLE)wParam, "CList", "StatusMsg", &dbv);
-			smsg = mir_u2a(dbv.pwszVal);
+			szMsg = mir_u2a(dbv.pwszVal);
 		} else
 #endif
 		{
 			DBGetContactSettingString((HANDLE)wParam, "CList", "StatusMsg", &dbv);
-			smsg = mir_strdup(dbv.pszVal);
+			szMsg = mir_strdup(dbv.pszVal);
 		}
 		DBFreeVariant(&dbv);
 
-		if (DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ShowCopy", 1) && lstrlenA(smsg))
+		if (DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ShowCopy", 1) && lstrlenA(szMsg))
 		{
 			clmi.flags = CMIM_FLAGS | CMIM_NAME | CMIF_TCHAR;
-			mir_sntprintf(str, SIZEOF(str), TranslateT("Copy %s Message"), (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, status, GCMDF_TCHAR));
+			mir_sntprintf(str, SIZEOF(str), TranslateT("Copy %s Message"), (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, iStatus, GCMDF_TCHAR));
 			clmi.ptszName = str;
 		}
 	}
 	CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hCopyMsgMenuItem, (LPARAM)&clmi);
 	clmi.flags = CMIM_FLAGS | CMIF_HIDDEN | CMIF_TCHAR;
 
-	if (!chatRoom)
+	if (!iHidden)
 	{
-		char *surl = NULL;
-		if (DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ShowGoToURL", 1) && lstrlenA(smsg))
+		char *szURL = NULL;
+		if (DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ShowGoToURL", 1) && lstrlenA(szMsg))
 		{
-			surl = strstr(smsg, "www.");
-			if (surl == NULL)
-				surl = strstr(smsg, "http://");
+			szURL = strstr(szMsg, "www.");
+			if (szURL == NULL)
+				szURL = strstr(szMsg, "http://");
 		}
-		if (surl != NULL)
+		if (szURL != NULL)
+		{
 			clmi.flags = CMIM_FLAGS | CMIM_NAME | CMIF_TCHAR;
-		mir_free(smsg);
-
-		mir_sntprintf(str, SIZEOF(str), TranslateT("&Go to URL in %s Message"), (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, status, GCMDF_TCHAR));
-		clmi.ptszName = str;
+			mir_sntprintf(str, SIZEOF(str), TranslateT("&Go to URL in %s Message"), (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, iStatus, GCMDF_TCHAR));
+			clmi.ptszName = str;
+		}
+		mir_free(szMsg);
 	}
 	CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hGoToURLMenuItem, (LPARAM)&clmi);
 
