@@ -1752,15 +1752,14 @@ static int ChangeStatusMsgPrebuild(WPARAM wParam, LPARAM lParam)
 	if (!accounts->statusMsgFlags)
 		return 0;
 
-	if (!DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ShowStatusMenuItem", 1))
-		return 0;
-
 	PROTOACCOUNT **pa;
 	int count, i;
 	CLISTMENUITEM mi = {0};
 
 	mi.cbSize = sizeof(mi);
 	mi.flags = CMIF_ICONFROMICOLIB | CMIF_TCHAR;
+	if (!DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ShowStatusMenuItem", 1))
+		mi.flags |= CMIF_HIDDEN;
 	mi.icolibItem = GetIconHandle(IDI_CSMSG);
 	mi.pszService = MS_SIMPLESTATUSMSG_SHOWDIALOGINT;
 	mi.ptszName = LPGENT("Status Message...");
