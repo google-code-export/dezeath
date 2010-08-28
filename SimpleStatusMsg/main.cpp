@@ -1721,6 +1721,20 @@ void AddToolbarButton(void)
 	CallService(MS_TB_ADDBUTTON, 0, (LPARAM)&tbb);
 }
 
+void RegisterHotkey(void)
+{
+	HOTKEYDESC hkd = {0};
+
+	hkd.cbSize = sizeof(hkd);
+	hkd.dwFlags = HKD_TCHAR;
+	hkd.pszName = "SimpleStatusMsg_OpenDialog";
+	hkd.ptszDescription = _T("Open Status Message Dialog");
+	hkd.ptszSection = _T("Status Message");
+	hkd.pszService = MS_SIMPLESTATUSMSG_SHOWDIALOGINT;
+	hkd.DefHotKey = HOTKEYCODE(HOTKEYF_CONTROL, VK_OEM_3);
+	CallService(MS_HOTKEY_REGISTER, 0, (LPARAM)&hkd);
+}
+
 static int OnIconsChanged(WPARAM wParam, LPARAM lParam)
 {
 	if (TopButton)
@@ -1991,6 +2005,8 @@ static int OnModulesLoaded(WPARAM wParam, LPARAM lParam)
 	HookEventEx(ME_TTB_MODULELOADED, AddTopToolbarButton);
 	if (ServiceExists(MS_TB_ADDBUTTON))
 		AddToolbarButton();
+
+	RegisterHotkey();
 
 	HookEventEx(ME_OPT_INITIALISE, InitOptions);
 	h_statusmodechange = HookEvent(ME_CLIST_STATUSMODECHANGE, ChangeStatusMessage);
