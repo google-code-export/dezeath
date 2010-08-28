@@ -481,10 +481,10 @@ VOID APIENTRY HandlePopupMenu(HWND hwnd, POINT pt, HWND edit_control)
 			SendMessage(edit_control, WM_PASTE, 0, 0);
 			break;
 		case IDM_SELECTALL:
-			SendMessage(edit_control, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
+			SendMessage(edit_control, EM_SETSEL, 0, -1);
 			break;
 		case IDM_DELETE:
-			SendMessage(edit_control, WM_SETTEXT, (WPARAM)0, (LPARAM)"");
+			SendMessage(edit_control, WM_SETTEXT, 0, (LPARAM)"");
 			SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(IDC_EDIT1, EN_CHANGE), (LPARAM)edit_control);
 			break;
 		case ID__FORTUNEAWAYMSG:
@@ -1135,7 +1135,13 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 			mir_free(init_data);
 
 			MainDlgProc = (WNDPROC)SetWindowLongPtr(GetDlgItem(hwndDlg, IDC_EDIT1), GWLP_WNDPROC, (LONG_PTR)EditBoxSubProc);
-			SetFocus(GetDlgItem(hwndDlg, IDC_OK));
+			if (!init_data->m_bOnEvent)
+			{
+				SetFocus(GetDlgItem(hwndDlg, IDC_EDIT1));
+				SendMessage(GetDlgItem(hwndDlg, IDC_EDIT1), EM_SETSEL, 0, -1);
+			}
+			else
+				SetFocus(GetDlgItem(hwndDlg, IDC_OK));
 
 			if (!DBGetContactSettingByte(NULL, "SimpleStatusMsg", "WinCentered", 1))
 			{
