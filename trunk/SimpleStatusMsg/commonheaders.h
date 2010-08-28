@@ -45,6 +45,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <m_idle.h>
 #include <m_icolib.h>
 #include <m_protoint.h>
+#include <m_hotkeys.h>
 #include <win2k.h>
 
 #include "sdk/m_fortunemsg.h"
