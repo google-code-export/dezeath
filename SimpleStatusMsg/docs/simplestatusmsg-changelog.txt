@@ -7,6 +7,16 @@ Simple Status Message plugin for Miranda IM Changelog
 
 
 ============================
+v 1.9.0.1 (2010/08/29):
+============================
++ Updater plugin support
++ Added hotkey for the status message dialog (Ctrl + `)
+* The keyboard focus is now set to the status message field in the status message dialog when opened manually
+! Fixed showing 'Copy Away Message' and 'Go to URL in Away Message' menu items
+! Fixed crash on opening the status message dialog when showing 'Status Message...' item in the status bar is disabled
+! Fixed retrieving the Winamp song title by %winampsong& variable
+
+============================
 v 1.9.0.0 (2010/08/25):
 ============================
 Plugin name change from SimpleAway to Simple Status Message.
