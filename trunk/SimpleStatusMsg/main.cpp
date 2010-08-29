@@ -37,8 +37,14 @@ static HANDLE *hProtoStatusMenuItem;
 
 PLUGININFOEX pluginInfo = {
 	sizeof(PLUGININFOEX),
+#if defined(_WIN64)
+	"Simple Status Message (x64)",
+#elif defined(_UNICODE)
+	"Simple Status Message (Unicode)",
+#else
 	"Simple Status Message",
-	PLUGIN_MAKE_VERSION(1, 9, 0, 0),
+#endif
+	PLUGIN_MAKE_VERSION(1, 9, 0, 1),
 	"Provides a simple way to set status and away messages",
 	"Bartosz 'Dezeath' Bia³ek, Harven",
 	"dezred"/*antispam*/"@"/*antispam*/"gmail"/*antispam*/"."/*antispam*/"com",
