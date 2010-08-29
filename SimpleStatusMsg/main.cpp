@@ -110,8 +110,9 @@ void log2file(const char *fmt, ...)
 
 static TCHAR *GetWinampSong(void)
 {
-	TCHAR *szTitle, *pstr, *pstr2, *res = NULL;
+	TCHAR *szTitle, *pstr, *res = NULL;
 	HWND hwndWinamp = FindWindow(_T("STUDIO"), NULL);
+	int iTitleLen;
 
 	if (hwndWinamp == NULL)
 		hwndWinamp = FindWindow(_T("Winamp v1.x"), NULL);
@@ -119,11 +120,12 @@ static TCHAR *GetWinampSong(void)
 	if (hwndWinamp == NULL)
 		return NULL;
 
-	szTitle = (TCHAR *)mir_alloc((GetWindowTextLength(hwndWinamp) + 1) * sizeof(TCHAR));
+	iTitleLen = GetWindowTextLength(hwndWinamp);
+	szTitle = (TCHAR *)mir_alloc((iTitleLen + 1) * sizeof(TCHAR));
 	if (szTitle == NULL)
 		return NULL;
 
-	if (GetWindowText(hwndWinamp, szTitle, GetWindowTextLength(hwndWinamp) + 1) == 0)
+	if (GetWindowText(hwndWinamp, szTitle, iTitleLen + 1) == 0)
 	{
 		mir_free(szTitle);
 		return NULL;
@@ -136,18 +138,27 @@ static TCHAR *GetWinampSong(void)
 		return NULL;
 	}
 
-	if (pstr+9+5 >= szTitle + _tcslen(szTitle))
+	if (pstr < szTitle + (iTitleLen / 2))
 	{
-		pstr2 = _tcschr(szTitle, _T('.'));
+		MoveMemory(szTitle, pstr + 9, _tcslen(pstr + 9) * sizeof(TCHAR));
+		pstr = _tcsstr(pstr + 1, _T(" - Winamp"));
+		if (pstr == NULL)
+		{
+			mir_free(szTitle);
+			return NULL;
+		}
 	}
-	else
+	*pstr = 0;
+
+	pstr = _tcschr(szTitle, _T('.'));
+	if (pstr == NULL)
 	{
-		pstr2 = _tcschr(pstr, _T('.'));
-		pstr = _tcsstr(pstr2, _T(" - Winamp"));
+		mir_free(szTitle);
+		return NULL;
 	}
-	pstr2 += 2;
-	*pstr = '\0';
-	res = mir_tstrdup(pstr2);
+
+	pstr += 2;
+	res = mir_tstrdup(pstr);
 	mir_free(szTitle);
 
 	return res;
