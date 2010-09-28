@@ -301,7 +301,7 @@ static INT_PTR GoToURLMsgCommand(WPARAM wParam, LPARAM lParam)
 	}
 	DBFreeVariant(&dbv);
 
-	if (lstrlenA(szMsg))
+	if (szMsg && lstrlenA(szMsg))
 	{
 		char *szURL = strstr(szMsg, "www.");
 		if (szURL == NULL)
@@ -313,9 +313,12 @@ static INT_PTR GoToURLMsgCommand(WPARAM wParam, LPARAM lParam)
 				szURL[i] != '\t' && szURL[i] != '\0'; i++);
 
 			char *szMsgURL = (char *)mir_alloc(i + 1);
-			lstrcpynA(szMsgURL, szURL, i + 1);
-			CallService(MS_UTILS_OPENURL, (WPARAM)1, (LPARAM)szMsgURL);
-			mir_free(szMsgURL);
+			if (szMsgURL)
+			{
+				lstrcpynA(szMsgURL, szURL, i + 1);
+				CallService(MS_UTILS_OPENURL, (WPARAM)1, (LPARAM)szMsgURL);
+				mir_free(szMsgURL);
+			}
 		}
 	}
 	mir_free(szMsg);
@@ -373,7 +376,7 @@ static int AwayMsgPreBuildMenu(WPARAM wParam, LPARAM lParam)
 		}
 		DBFreeVariant(&dbv);
 
-		if (DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ShowCopy", 1) && lstrlenA(szMsg))
+		if (DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ShowCopy", 1) && szMsg && lstrlenA(szMsg))
 		{
 			clmi.flags = CMIM_FLAGS | CMIM_NAME | CMIF_TCHAR;
 			mir_sntprintf(str, SIZEOF(str), TranslateT("Copy %s Message"), (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, iStatus, GCMDF_TCHAR));
@@ -386,7 +389,7 @@ static int AwayMsgPreBuildMenu(WPARAM wParam, LPARAM lParam)
 	if (!iHidden)
 	{
 		char *szURL = NULL;
-		if (DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ShowGoToURL", 1) && lstrlenA(szMsg))
+		if (DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ShowGoToURL", 1) && szMsg && lstrlenA(szMsg))
 		{
 			szURL = strstr(szMsg, "www.");
 			if (szURL == NULL)
