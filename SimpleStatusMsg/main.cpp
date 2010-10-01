@@ -713,7 +713,7 @@ static TCHAR *GetAwayMessage(int iStatus, const char *szProto, HANDLE hContact)
 			//else
 			//	format = mir_tstrdup(_T(""));
 		}
-		else
+		else if (flags & PROTO_POPUPDLG)
 			format = GetAwayMessageFormat(iStatus, szProto);
 	}
 #ifdef _DEBUG
@@ -1430,60 +1430,20 @@ static int ProcessProtoAck(WPARAM wParam,LPARAM lParam)
 
 	if (ack->type == ACKTYPE_AWAYMSG && ack->result == ACKRESULT_SENTREQUEST && !ack->lParam)
 	{
-		int status_mode, flags;
-		char setting[80];
-		TCHAR *msg = NULL;
-
-		status_mode = CallProtoService((char *)ack->szModule, PS_GETSTATUS, 0, 0);
-
-		mir_snprintf(setting, SIZEOF(setting), "Proto%sFlags", (char *)ack->szModule);
-		flags = DBGetContactSettingByte(NULL, "SimpleStatusMsg", setting, PROTO_POPUPDLG);
-
-		if (flags & PROTO_THIS_MSG)
-		{
-			DBVARIANT dbv;
-			mir_snprintf(setting, SIZEOF(setting), "Proto%sDefault", (char *)ack->szModule);
-			if (!DBGetContactSettingTString(NULL, "SimpleStatusMsg", setting, &dbv))
-			{
-				msg = InsertVarsIntoMsg(dbv.ptszVal, (char *)ack->szModule, status_mode, NULL);
-				DBFreeVariant(&dbv);
-			}
-			else
-				msg = mir_tstrdup(_T(""));
-		}
-		else if (flags & PROTO_NOCHANGE)
-		{
-			DBVARIANT dbv;
-			mir_snprintf(setting, SIZEOF(setting), "FCur%sMsg", (char *)ack->szModule);
-			if (!DBGetContactSettingTString(NULL, "SimpleStatusMsg", setting, &dbv))
-			{
-				msg = InsertVarsIntoMsg(dbv.ptszVal, (char *)ack->szModule, status_mode, NULL);
-				DBFreeVariant(&dbv);
-			}
-		}
-		else if (flags & PROTO_POPUPDLG)
-		{
-			TCHAR *fmsg = GetAwayMessageFormat(status_mode, ack->szModule);
-			if (fmsg)
-			{
-				msg = InsertVarsIntoMsg(fmsg, (char *)ack->szModule, status_mode, NULL);
-				mir_free(fmsg);
-			}
-		}
-
+		TCHAR *tszMsg = GetAwayMessage(CallProtoService((char *)ack->szModule, PS_GETSTATUS, 0, 0), (char *)ack->szModule, NULL);
 #ifdef _UNICODE
 		{
-			char *msgA = mir_u2a(msg);
-			CallContactService(ack->hContact, PSS_AWAYMSG, (WPARAM)(HANDLE)ack->hProcess, (LPARAM)msgA);
-			if (msgA) mir_free(msgA);
+			char *szMsg = mir_u2a(tszMsg);
+			CallContactService(ack->hContact, PSS_AWAYMSG, (WPARAM)(HANDLE)ack->hProcess, (LPARAM)szMsg);
+			if (szMsg) mir_free(szMsg);
 		}
 #else
-		CallContactService(ack->hContact, PSS_AWAYMSG, (WPARAM)(HANDLE)ack->hProcess, (LPARAM)msg);
+		CallContactService(ack->hContact, PSS_AWAYMSG, (WPARAM)(HANDLE)ack->hProcess, (LPARAM)tszMsg);
 #endif
 #ifdef _DEBUG
-		log2file("ProcessProtoAck(): Send away message \"" TCHAR_STR_PARAM "\" reply.", msg);
+		log2file("ProcessProtoAck(): Send away message \"" TCHAR_STR_PARAM "\" reply.", tszMsg);
 #endif
-		if (msg) mir_free(msg);
+		if (tszMsg) mir_free(tszMsg);
 		return 0;
 	}
 
