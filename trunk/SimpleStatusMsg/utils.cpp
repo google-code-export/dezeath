@@ -21,8 +21,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "simplestatusmsg.h"
 
 static HANDLE *hHookList = NULL;
+static HANDLE *hProtoHookList = NULL;
 static HANDLE *hServiceList = NULL;
 static int HookCount = 0;
+static int ProtoHookCount = 0;
 static int ServiceCount = 0;
 
 struct tagiconList
@@ -87,19 +89,40 @@ void ReleaseIconEx(const char* name)
 	CallService(MS_SKIN2_RELEASEICON, 0, (LPARAM)szSettingName);
 }
 
-HANDLE HookEventEx(const char *name, MIRANDAHOOK hookProc)
+HANDLE HookEventEx(const char *szEvent, MIRANDAHOOK hookProc)
 {
 	HookCount++;
 	hHookList = (HANDLE *)mir_realloc(hHookList, sizeof(HANDLE) * HookCount);
-	return hHookList[HookCount - 1] = HookEvent(name, hookProc);
+	return hHookList[HookCount - 1] = HookEvent(szEvent, hookProc);
 }
 
-void UnhookEventsEx(void)
+void UnhookEvents(void)
 {
+	if (hHookList == NULL) return;
 	for (int i = 0; i < HookCount; ++i)
 		if (hHookList[i] != NULL) UnhookEvent(hHookList[i]);
 	mir_free(hHookList);
+	hHookList = NULL;
 	HookCount = 0;
+}
+
+HANDLE HookProtoEvent(const char *szModule, const char *szEvent, MIRANDAHOOKPARAM hookProc)
+{
+	char szProtoEvent[MAXMODULELABELLENGTH];
+	mir_snprintf(szProtoEvent, sizeof(szProtoEvent), "%s%s", szModule, szEvent);
+	ProtoHookCount++;
+	hProtoHookList = (HANDLE *)mir_realloc(hProtoHookList, sizeof(HANDLE) * ProtoHookCount);
+	return hProtoHookList[ProtoHookCount - 1] = HookEventParam(szProtoEvent, hookProc, (LPARAM)szModule);
+}
+
+void UnhookProtoEvents(void)
+{
+	if (hProtoHookList == NULL) return;
+	for (int i = 0; i < ProtoHookCount; ++i)
+		if (hProtoHookList[i] != NULL) UnhookEvent(hProtoHookList[i]);
+	mir_free(hProtoHookList);
+	hProtoHookList = NULL;
+	ProtoHookCount = 0;
 }
 
 HANDLE CreateServiceFunctionEx(const char *name, MIRANDASERVICE serviceProc)

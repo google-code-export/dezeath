@@ -490,24 +490,25 @@ TCHAR *InsertBuiltinVarsIntoMsg(TCHAR *in, const char *szProto, int status)
 	return msg;
 }
 
-TCHAR *InsertVarsIntoMsg(TCHAR *msg, const char *szProto, int status)
+TCHAR *InsertVarsIntoMsg(TCHAR *tszMsg, const char *szProto, int iStatus, HANDLE hContact)
 {
 	if (ServiceExists(MS_VARS_FORMATSTRING))
 	{
 		FORMATINFO fInfo = {0};
 		fInfo.cbSize = sizeof(fInfo);
 		fInfo.flags = FIF_TCHAR;
-		fInfo.tszFormat = msg;
-		TCHAR *after_format = (TCHAR *)CallService(MS_VARS_FORMATSTRING, (WPARAM)&fInfo, 0);
-		if (after_format != NULL)
+		fInfo.tszFormat = tszMsg;
+		fInfo.hContact = hContact;
+		TCHAR *tszVarsMsg = (TCHAR *)CallService(MS_VARS_FORMATSTRING, (WPARAM)&fInfo, 0);
+		if (tszVarsMsg != NULL)
 		{
-			TCHAR *format = InsertBuiltinVarsIntoMsg(after_format, szProto, status);
-			CallService(MS_VARS_FREEMEMORY, (WPARAM)after_format, 0);
+			TCHAR *format = InsertBuiltinVarsIntoMsg(tszVarsMsg, szProto, iStatus);
+			CallService(MS_VARS_FREEMEMORY, (WPARAM)tszVarsMsg, 0);
 			return format;
 		}
 	}
 
-	return InsertBuiltinVarsIntoMsg(msg, szProto, status);
+	return InsertBuiltinVarsIntoMsg(tszMsg, szProto, iStatus);
 }
 
 static TCHAR *GetAwayMessageFormat(int iStatus, const char *szProto)
@@ -649,7 +650,7 @@ void SaveStatusAsCurrent(const char *szProto, int iStatus)
 	DBWriteContactSettingWord(NULL, "SimpleStatusMsg", setting, (WORD)iStatus);
 }
 
-static TCHAR *GetAwayMessage(int iStatus, const char *szProto)
+static TCHAR *GetAwayMessage(int iStatus, const char *szProto, HANDLE hContact)
 {
 	TCHAR *format = NULL, *ret;
 	char szSetting[80];
@@ -721,7 +722,7 @@ static TCHAR *GetAwayMessage(int iStatus, const char *szProto)
 	if (format == NULL)
 		return NULL;
 
-	ret = InsertVarsIntoMsg(format, szProto, iStatus); // TODO random values not the same!
+	ret = InsertVarsIntoMsg(format, szProto, iStatus, hContact); // TODO random values not the same!
 	mir_free(format);
 
 	return ret /*? ret : mir_tstrdup(_T(""))*/;
@@ -820,7 +821,7 @@ int HasProtoStaticStatusMsg(const char *szProto, int iInitialStatus, int iStatus
 		if (!DBGetContactSettingTString(NULL, "SimpleStatusMsg", setting, &dbv))
 		{
 			SaveMessageToDB(szProto, dbv.ptszVal, TRUE);
-			msg = InsertVarsIntoMsg(dbv.ptszVal, szProto, iStatus);
+			msg = InsertVarsIntoMsg(dbv.ptszVal, szProto, iStatus, NULL);
 			DBFreeVariant(&dbv);
 			Proto_SetStatus(szProto, iInitialStatus, iStatus, msg);
 			SaveMessageToDB(szProto, msg, FALSE);
@@ -874,7 +875,7 @@ INT_PTR SetStatusModeFromExtern(WPARAM wParam, LPARAM lParam)
 				continue;
 
 			if (lParam)
-				msg = InsertVarsIntoMsg((TCHAR *)lParam, accounts->pa[i]->szModuleName, newStatus);
+				msg = InsertVarsIntoMsg((TCHAR *)lParam, accounts->pa[i]->szModuleName, newStatus, NULL);
 
 			SaveMessageToDB(accounts->pa[i]->szModuleName, (TCHAR *)lParam, TRUE);
 			SaveMessageToDB(accounts->pa[i]->szModuleName, msg, FALSE);
@@ -918,7 +919,7 @@ void SetStatusMessage(const char *szProto, int iInitialStatus, int iStatus, TCHA
 		}
 
 		if (message)
-			msg = InsertVarsIntoMsg(message, szProto, iStatus);
+			msg = InsertVarsIntoMsg(message, szProto, iStatus, NULL);
 
 		SaveMessageToDB(szProto, message, TRUE);
 		SaveMessageToDB(szProto, msg, FALSE);
@@ -984,7 +985,7 @@ void SetStatusMessage(const char *szProto, int iInitialStatus, int iStatus, TCHA
 				continue;
 
 			if (message)
-				msg = InsertVarsIntoMsg(message, accounts->pa[i]->szModuleName, iStatus);
+				msg = InsertVarsIntoMsg(message, accounts->pa[i]->szModuleName, iStatus, NULL);
 
 			SaveMessageToDB(accounts->pa[i]->szModuleName, message, TRUE);
 			SaveMessageToDB(accounts->pa[i]->szModuleName, msg, FALSE);
@@ -1444,7 +1445,7 @@ static int ProcessProtoAck(WPARAM wParam,LPARAM lParam)
 			mir_snprintf(setting, SIZEOF(setting), "Proto%sDefault", (char *)ack->szModule);
 			if (!DBGetContactSettingTString(NULL, "SimpleStatusMsg", setting, &dbv))
 			{
-				msg = InsertVarsIntoMsg(dbv.ptszVal, (char *)ack->szModule, status_mode);
+				msg = InsertVarsIntoMsg(dbv.ptszVal, (char *)ack->szModule, status_mode, NULL);
 				DBFreeVariant(&dbv);
 			}
 			else
@@ -1456,7 +1457,7 @@ static int ProcessProtoAck(WPARAM wParam,LPARAM lParam)
 			mir_snprintf(setting, SIZEOF(setting), "FCur%sMsg", (char *)ack->szModule);
 			if (!DBGetContactSettingTString(NULL, "SimpleStatusMsg", setting, &dbv))
 			{
-				msg = InsertVarsIntoMsg(dbv.ptszVal, (char *)ack->szModule, status_mode);
+				msg = InsertVarsIntoMsg(dbv.ptszVal, (char *)ack->szModule, status_mode, NULL);
 				DBFreeVariant(&dbv);
 			}
 		}
@@ -1465,7 +1466,7 @@ static int ProcessProtoAck(WPARAM wParam,LPARAM lParam)
 			TCHAR *fmsg = GetAwayMessageFormat(status_mode, ack->szModule);
 			if (fmsg)
 			{
-				msg = InsertVarsIntoMsg(fmsg, (char *)ack->szModule, status_mode);
+				msg = InsertVarsIntoMsg(fmsg, (char *)ack->szModule, status_mode, NULL);
 				mir_free(fmsg);
 			}
 		}
@@ -1544,7 +1545,7 @@ int SetStartupStatus(int i)
 #endif
 
 	if (fmsg)
-		msg = InsertVarsIntoMsg(fmsg, accounts->pa[i]->szModuleName, iStatus);
+		msg = InsertVarsIntoMsg(fmsg, accounts->pa[i]->szModuleName, iStatus, NULL);
 			
 	SaveMessageToDB(accounts->pa[i]->szModuleName, fmsg, TRUE);
 	SaveMessageToDB(accounts->pa[i]->szModuleName, msg, FALSE);
@@ -1680,7 +1681,7 @@ VOID CALLBACK SAUpdateMsgTimerProc(HWND timerhwnd, UINT uMsg, UINT_PTR idEvent, 
 			if (DBGetContactSettingTString(NULL,"SimpleStatusMsg", buff, &dbv))
 				continue;
 
-			msg = InsertVarsIntoMsg(dbv.ptszVal, accounts->pa[i]->szModuleName, status);
+			msg = InsertVarsIntoMsg(dbv.ptszVal, accounts->pa[i]->szModuleName, status, NULL);
 			DBFreeVariant(&dbv);
 
 			mir_snprintf(buff, SIZEOF(buff), "Cur%sMsg", accounts->pa[i]->szModuleName);
@@ -1922,12 +1923,12 @@ static int CSStatusChange(WPARAM wParam, LPARAM lParam)
 			mir_snprintf(setting, SIZEOF(setting), "%sMsg", ps[i]->szName);
 #ifdef _UNICODE
 			DBWriteContactSettingWString(NULL, "SRAway", StatusModeToDbSetting(status_mode, setting), szMsgW);
-			msg = InsertVarsIntoMsg(szMsgW, ps[i]->szName, status_mode);
+			msg = InsertVarsIntoMsg(szMsgW, ps[i]->szName, status_mode, NULL);
 			SaveMessageToDB(ps[i]->szName, szMsgW, TRUE);
 			mir_free(szMsgW);
 #else
 			DBWriteContactSettingString(NULL, "SRAway", StatusModeToDbSetting(status_mode, setting), ps[i]->szMsg);
-			msg = InsertVarsIntoMsg(ps[i]->szMsg, ps[i]->szName, status_mode);
+			msg = InsertVarsIntoMsg(ps[i]->szMsg, ps[i]->szName, status_mode, NULL);
 			SaveMessageToDB(ps[i]->szName, ps[i]->szMsg, TRUE);
 #endif
 			SaveMessageToDB(ps[i]->szName, msg, FALSE);
@@ -1960,6 +1961,52 @@ static TCHAR *ParseWinampSong(ARGUMENTSINFO *ai)
 	return winamp_title;
 }
 
+int ICQMsgTypeToStatus(int iMsgType)
+{
+	switch (iMsgType)
+	{
+		case MTYPE_AUTOONLINE: return ID_STATUS_ONLINE;
+		case MTYPE_AUTOAWAY: return ID_STATUS_AWAY;
+		case MTYPE_AUTOBUSY: return ID_STATUS_OCCUPIED;
+		case MTYPE_AUTONA: return ID_STATUS_NA;
+		case MTYPE_AUTODND: return ID_STATUS_DND;
+		case MTYPE_AUTOFFC: return ID_STATUS_FREECHAT;
+		default: return ID_STATUS_OFFLINE;
+	}
+}
+
+static int OnICQStatusMsgRequest(WPARAM wParam, LPARAM lParam, LPARAM lMirParam)
+{
+#ifdef _DEBUG
+	log2file("OnICQStatusMsgRequest(): %s", (char *)lMirParam);
+#endif
+
+	HANDLE hContact;
+	char *szProto;
+	BOOL bContactFound = FALSE;
+
+	hContact = (HANDLE)CallService(MS_DB_CONTACT_FINDFIRST, 0, 0);
+	while (hContact)
+	{
+		szProto = (char *)CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact, 0);
+		if (szProto != NULL && !strcmp(szProto, (char *)lMirParam) && DBGetContactSettingDword(hContact, szProto, "UIN", 0) == (DWORD)lParam)
+		{
+			bContactFound = TRUE;
+			break;
+		}
+		hContact = (HANDLE)CallService(MS_DB_CONTACT_FINDNEXT, (WPARAM)hContact, 0);
+	}
+	if (!bContactFound)
+		return 0;
+
+	int iStatus = ICQMsgTypeToStatus(wParam);
+	TCHAR *tszMsg = GetAwayMessage(iStatus, szProto, hContact);
+	Proto_SetAwayMsgT(szProto, iStatus, tszMsg);
+	mir_free(tszMsg);
+
+	return 0;
+}
+
 static int OnAccListChanged(WPARAM wParam, LPARAM lParam)
 {
 #ifdef _DEBUG
@@ -1969,12 +2016,16 @@ static int OnAccListChanged(WPARAM wParam, LPARAM lParam)
 	accounts->statusCount = 0;
 	accounts->statusMsgFlags = 0;
 	accounts->statusMsgCount = 0;
+	UnhookProtoEvents();
 
 	ProtoEnumAccounts(&accounts->count, &accounts->pa);
 	for (int i = 0; i < accounts->count; ++i)
 	{
 		if (!IsAccountEnabled(accounts->pa[i]))
 			continue;
+
+		if (!strcmp(accounts->pa[i]->szProtoName, "ICQ"))
+			HookProtoEvent(accounts->pa[i]->szModuleName, ME_ICQ_STATUSMSGREQ, OnICQStatusMsgRequest);
 
 		accounts->statusFlags |= (CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_2, 0) &~ CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_5, 0));
 		
@@ -2144,13 +2195,13 @@ static INT_PTR IsSARunning(WPARAM wParam, LPARAM lParam)
 //remember to mir_free() the return value
 static INT_PTR sttGetAwayMessageT(WPARAM wParam, LPARAM lParam)
 {
-	return (INT_PTR)GetAwayMessage((int)wParam, (char*)lParam);
+	return (INT_PTR)GetAwayMessage((int)wParam, (char*)lParam, NULL);
 }
 
 #ifdef UNICODE
 static INT_PTR sttGetAwayMessage(WPARAM wParam, LPARAM lParam)
 {
-	TCHAR* msg = GetAwayMessage((int)wParam, (char*)lParam);
+	TCHAR* msg = GetAwayMessage((int)wParam, (char*)lParam, NULL);
 	char*  res = mir_t2a(msg);
 	mir_free(msg);
 	return (INT_PTR)res;
@@ -2206,7 +2257,7 @@ extern "C" int __declspec(dllexport) Load(PLUGINLINK *link)
 
 extern "C" int __declspec(dllexport) Unload(void)
 {
-	UnhookEventsEx();
+	UnhookEvents();
 	UnhookEvent(h_statusmodechange);
 	DestroyServiceFunctionsEx();
 

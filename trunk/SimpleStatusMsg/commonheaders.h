@@ -46,8 +46,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <m_icolib.h>
 #include <m_protoint.h>
 #include <m_hotkeys.h>
+#include <m_icq.h>
 #include <win2k.h>
 
+#include "sdk/icq_constants.h"
 #include "sdk/m_fortunemsg.h"
 #include "sdk/m_statusplugins.h"
 #include "sdk/m_toolbar.h"
