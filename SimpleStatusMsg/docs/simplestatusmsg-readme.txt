@@ -15,8 +15,8 @@ Main features:
 - Unicode status messages support.
 - Predefined status messages.
 - Can remember up to 25 recent status messages which you can choose in the status message dialog.
-- The status message dialog can be accessed through a hotkey, the main menu, the status bar menu, Modern Contact
-  List Toolbar, TopToolbar plugin frame or on status change.
+- The status message dialog can be accessed through a hotkey, the status bar menu, Modern Contact List Toolbar,
+  TopToolbar plugin frame or on status change.
 - Built-in variables (see below) and support for Variables plugin.
 - Can update variables in status messages every specified time.
 
