@@ -53,8 +53,8 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)dat);
 
 			dat->hContact = (HANDLE)lParam;
-			dat->hAwayMsgEvent = HookEventMessage(ME_PROTO_ACK, hwndDlg, HM_AWAYMSG);
 			dat->hSeq = (HANDLE)CallContactService(dat->hContact, PSS_GETAWAYMSG, 0, 0);
+			dat->hAwayMsgEvent = dat->hSeq ? HookEventMessage(ME_PROTO_ACK, hwndDlg, HM_AWAYMSG) : NULL;
 			WindowList_Add(hWindowList, hwndDlg, dat->hContact);
 			{
 				TCHAR str[256], format[128];
@@ -66,8 +66,16 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 				GetWindowText(hwndDlg, format, SIZEOF(format));
 				mir_sntprintf(str, SIZEOF(str), format, status, contactName);
 				SetWindowText(hwndDlg, str);
-				GetDlgItemText(hwndDlg, IDC_RETRIEVING, format, SIZEOF(format));
-				mir_sntprintf(str, SIZEOF(str), format, status);
+				if (dat->hSeq)
+				{
+					GetDlgItemText(hwndDlg, IDC_RETRIEVING, format, SIZEOF(format));
+					mir_sntprintf(str, SIZEOF(str), format, status);
+				}
+				else
+				{
+					mir_sntprintf(str, SIZEOF(str), TranslateT("Failed to retrieve %s message."), status);
+					SetDlgItemText(hwndDlg, IDOK, TranslateT("&Close"));
+				}
 				SetDlgItemText(hwndDlg, IDC_RETRIEVING, str);
 				SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadSkinnedProtoIcon(szProto, dwStatus));
 				SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadSkinnedProtoIcon(szProto, dwStatus));
@@ -184,13 +192,14 @@ static INT_PTR CALLBACK CopyAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)dat);
 
 			dat->hContact = (HANDLE)lParam;
-			dat->hAwayMsgEvent = HookEventMessage(ME_PROTO_ACK, hwndDlg, HM_AWAYMSG);
 			dat->hSeq = (HANDLE)CallContactService(dat->hContact, PSS_GETAWAYMSG, 0, 0);
+			dat->hAwayMsgEvent = dat->hSeq ? HookEventMessage(ME_PROTO_ACK, hwndDlg, HM_AWAYMSG) : NULL;
 			WindowList_Add(hWindowList2, hwndDlg, dat->hContact);
 			contactName = (TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)dat->hContact, GCDNF_TCHAR);
 			GetWindowText(hwndDlg, format, SIZEOF(format));
 			mir_sntprintf(str, SIZEOF(str), format, contactName);
 			SetWindowText(hwndDlg, str);
+			if (!dat->hSeq) DestroyWindow(hwndDlg);
 			return TRUE;
 		}
 
