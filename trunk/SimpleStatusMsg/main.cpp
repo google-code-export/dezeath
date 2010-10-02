@@ -31,7 +31,6 @@ UINT SAUpdateMsgTimer = 0, *SASetStatusTimer;
 static TCHAR *winampsong;
 HANDLE TopButton = 0, h_statusmodechange;
 HWND hwndSAMsgDialog;
-static HANDLE hChangeStatusMsgMenuItem = NULL;
 static HANDLE hGlobalStatusMenuItem = NULL;
 static HANDLE *hProtoStatusMenuItem;
 
@@ -1723,19 +1722,6 @@ static int OnIconsChanged(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-void ChangeStatusMsgMenuItemInit(void)
-{
-	CLISTMENUITEM mi = {0};
-
-	mi.cbSize = sizeof(mi);
-	mi.position = 500050001;
-	mi.flags = CMIF_ICONFROMICOLIB | CMIF_TCHAR;
-	mi.icolibItem = GetIconHandle(IDI_CSMSG);
-	mi.ptszName = LPGENT("Change Status Message");
-	mi.pszService = MS_SIMPLESTATUSMSG_SHOWDIALOGINT;
-	hChangeStatusMsgMenuItem = (HANDLE)CallService(MS_CLIST_ADDMAINMENUITEM, 0, (LPARAM)&mi);
-}
-
 static int ChangeStatusMsgPrebuild(WPARAM wParam, LPARAM lParam)
 {
 #ifdef _DEBUG
@@ -2040,7 +2026,6 @@ static int OnModulesLoaded(WPARAM wParam, LPARAM lParam)
 	h_statusmodechange = HookEvent(ME_CLIST_STATUSMODECHANGE, ChangeStatusMessage);
 	HookEventEx(ME_PROTO_ACK, ProcessProtoAck);
 
-	ChangeStatusMsgMenuItemInit();
 	HookEventEx(ME_CLIST_PREBUILDSTATUSMENU, ChangeStatusMsgPrebuild);
 	ChangeStatusMsgPrebuild(0, 0);
 
