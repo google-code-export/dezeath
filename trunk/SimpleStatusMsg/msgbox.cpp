@@ -816,50 +816,47 @@ void SetEditControlText(struct MsgBoxData *data, HWND hwndDlg, int iStatus)
 		data->curr_sel_msg = fcursel;
 }
 
-void ChangeDlgStatus(HWND hwndDlg, struct MsgBoxData *msgbox_data, int status)
+void ChangeDlgStatus(HWND hwndDlg, struct MsgBoxData *msgbox_data, int iStatus)
 {
-	TCHAR title[256], ProtoName[128];
-	BOOL currentstatus = FALSE, blck = FALSE;
+	TCHAR szTitle[256], szProtoName[128];
+	BOOL blck = FALSE;
 
-	mir_sntprintf(ProtoName, SIZEOF(ProtoName), msgbox_data->m_szProto ? ProtoGetAccount(msgbox_data->m_szProto)->tszAccountName : TranslateT("Global"));
-	if (status == ID_STATUS_CURRENT)
+	mir_sntprintf(szProtoName, SIZEOF(szProtoName), msgbox_data->m_szProto ? ProtoGetAccount(msgbox_data->m_szProto)->tszAccountName : TranslateT("Global"));
+	if (iStatus == ID_STATUS_CURRENT)
 	{
 		if (msgbox_data->m_bOnStartup)
-			mir_sntprintf(title, SIZEOF(title), TranslateT("%s Status Message: %s"), ProtoName, TranslateT("<startup>"));
+			mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("%s Status Message: %s"), szProtoName, TranslateT("<startup>"));
 		else
-			mir_sntprintf(title, SIZEOF(title), TranslateT("%s Status Message: %s"), ProtoName, TranslateT("<current>"));
+			mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("%s Status Message: %s"), szProtoName, TranslateT("<current>"));
 	}
-	else if (status > ID_STATUS_CURRENT)
+	else if (iStatus > ID_STATUS_CURRENT)
 	{
 		TCHAR	buff[128];
 #ifdef _UNICODE
 		char buff1[128];
-		CallService(MS_SS_GETPROFILENAME, status-40083, (LPARAM)buff1);
+		CallService(MS_SS_GETPROFILENAME, iStatus - 40083, (LPARAM)buff1);
 		MultiByteToWideChar(CallService(MS_LANGPACK_GETCODEPAGE, 0, 0), 0, buff1, -1, buff, 128);
 #else
 		CallService(MS_SS_GETPROFILENAME, status-40083, (LPARAM)buff);
 #endif
-		mir_sntprintf(title, SIZEOF(title), TranslateT("%s Status Message: %s"), ProtoName, (TCHAR*)buff);
+		mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("%s Status Message: %s"), szProtoName, (TCHAR*)buff);
 	}
 	else
-		mir_sntprintf(title, SIZEOF(title), TranslateT("%s Status Message: %s"), ProtoName, (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, status, GCMDF_TCHAR));
-	SetWindowText(hwndDlg, title);
+		mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("%s Status Message: %s"), szProtoName, (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, iStatus, GCMDF_TCHAR));
+	SetWindowText(hwndDlg, szTitle);
 
-	if (status == ID_STATUS_CURRENT)
-	{
-		status = msgbox_data->m_bOnStartup ? GetStartupStatus(msgbox_data->m_szProto) : GetCurrentStatus(msgbox_data->m_szProto);
-		currentstatus = TRUE;
-	}
-	else if (status > ID_STATUS_CURRENT)
-		status = GetCurrentStatus(NULL);
+	if (iStatus == ID_STATUS_CURRENT)
+		iStatus = msgbox_data->m_bOnStartup ? GetStartupStatus(msgbox_data->m_szProto) : GetCurrentStatus(msgbox_data->m_szProto);
+	else if (iStatus > ID_STATUS_CURRENT)
+		iStatus = GetCurrentStatus(NULL);
 
-	CallService(MS_SKIN2_RELEASEICON, (WPARAM)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadSkinnedProtoIcon(msgbox_data->m_szProto, status)), 0);
-	CallService(MS_SKIN2_RELEASEICON, (WPARAM)SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadSkinnedProtoIcon(msgbox_data->m_szProto, status)) , 0);
+	CallService(MS_SKIN2_RELEASEICON, (WPARAM)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadSkinnedProtoIcon(msgbox_data->m_szProto, iStatus)), 0);
+	CallService(MS_SKIN2_RELEASEICON, (WPARAM)SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadSkinnedProtoIcon(msgbox_data->m_szProto, iStatus)) , 0);
 
 	if (msgbox_data->m_szProto && !(CallProtoService(msgbox_data->m_szProto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND))
 		blck = TRUE;
 
-	if (((Proto_Status2Flag(status) & msgbox_data->m_iStatusMsgModes) || (status == ID_STATUS_OFFLINE && (Proto_Status2Flag(ID_STATUS_INVISIBLE) & msgbox_data->m_iStatusMsgModes))) && !blck)
+	if (((Proto_Status2Flag(iStatus) & msgbox_data->m_iStatusMsgModes) || (iStatus == ID_STATUS_OFFLINE && (Proto_Status2Flag(ID_STATUS_INVISIBLE) & msgbox_data->m_iStatusMsgModes))) && !blck)
 	{
 		int num_items = SendMessage(msgbox_data->recent_cbex, CB_GETCOUNT, 0, 0);
 		int fcursel = CB_ERR, num_start = num_items - msgbox_data->num_def_msgs - 1;
@@ -951,11 +948,11 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 	{
 		case WM_INITDIALOG:
 		{
-			TCHAR title[256], format[256], ProtoName[128];
+			TCHAR szTitle[256], szFormat[256], szProtoName[128];
 			struct MsgBoxInitData *init_data;
 			struct MsgBoxData *copy_init_data;
 			INITCOMMONCONTROLSEX icex = {0};
-			BOOL curstatus = FALSE, blck = FALSE;
+			BOOL bCurrentStatus = FALSE, blck = FALSE;
 
 			InitCommonControls();
 			icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
@@ -964,19 +961,19 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 
 			TranslateDialogDefault(hwndDlg);
 			init_data = (struct MsgBoxInitData*)lParam;
-			GetWindowText(hwndDlg, format, SIZEOF(format));
-			mir_sntprintf(ProtoName, SIZEOF(ProtoName), init_data->m_szProto ? ProtoGetAccount(init_data->m_szProto)->tszAccountName : TranslateT("Global"));
+			GetWindowText(hwndDlg, szFormat, SIZEOF(szFormat));
+			mir_sntprintf(szProtoName, SIZEOF(szProtoName), init_data->m_szProto ? ProtoGetAccount(init_data->m_szProto)->tszAccountName : TranslateT("Global"));
 
 			if (init_data->m_iStatus == ID_STATUS_CURRENT)
 			{
 				if (init_data->m_bOnStartup)
-					mir_sntprintf(title, SIZEOF(title), format, ProtoName, TranslateT("<startup>"));
+					mir_sntprintf(szTitle, SIZEOF(szTitle), szFormat, szProtoName, TranslateT("<startup>"));
 				else
-					mir_sntprintf(title, SIZEOF(title), format, ProtoName, TranslateT("<current>"));
+					mir_sntprintf(szTitle, SIZEOF(szTitle), szFormat, szProtoName, TranslateT("<current>"));
 			}
 			else
-				mir_sntprintf(title, SIZEOF(title), format, ProtoName, (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, init_data->m_iStatus, GCMDF_TCHAR));
-			SetWindowText(hwndDlg, title); //Set the window title
+				mir_sntprintf(szTitle, SIZEOF(szTitle), szFormat, szProtoName, (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, init_data->m_iStatus, GCMDF_TCHAR));
+			SetWindowText(hwndDlg, szTitle);
 
 			int icoStatus = ID_STATUS_OFFLINE;
 			if (init_data->m_iStatus == ID_STATUS_CURRENT)
@@ -1055,7 +1052,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 				else
 					copy_init_data->m_iStatus = GetCurrentStatus(copy_init_data->m_szProto);
 				if (copy_init_data->m_szProto == NULL)
-					curstatus = TRUE;
+					bCurrentStatus = TRUE;
 			}
 
 			copy_init_data->recent_cbex = CreateRecentComboBoxEx(hwndDlg, copy_init_data);
@@ -1129,7 +1126,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 				DisplayCharsCount(copy_init_data, hwndDlg);
 			}
 
-			if (curstatus)
+			if (bCurrentStatus)
 				copy_init_data->m_iStatus = ID_STATUS_CURRENT;
 
 			mir_free(init_data);
@@ -1184,39 +1181,38 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 			{
 				case IDC_OK:
 				{
-					TCHAR msg[1024];
-					int len = 0, profilestatus = 0;
-					BOOL currentstatus = FALSE;
+					TCHAR tszMsg[1024];
+					int iStatus, iMsgLen = 0, iProfileStatus = 0;
+					BOOL bCurrentStatus = FALSE;
 
 					if (msgbox_data->m_iStatus == ID_STATUS_CURRENT)
 					{
 						msgbox_data->m_iStatus = msgbox_data->m_bOnStartup ? GetStartupStatus(msgbox_data->m_szProto) : GetCurrentStatus(msgbox_data->m_szProto);
 						if (msgbox_data->m_szProto == NULL)
-							currentstatus = TRUE;
+							bCurrentStatus = TRUE;
 					}
 					else if (msgbox_data->m_iStatus >= ID_STATUS_CURRENT)
 					{
-						profilestatus = msgbox_data->m_iStatus;
+						iProfileStatus = msgbox_data->m_iStatus;
 						msgbox_data->m_iStatus = GetCurrentStatus(NULL);
 					}
 
 					if (IsWindowEnabled(GetDlgItem(hwndDlg, IDC_EDIT1)))
-						len = GetDlgItemText(hwndDlg, IDC_EDIT1, msg, SIZEOF(msg));
+						iMsgLen = GetDlgItemText(hwndDlg, IDC_EDIT1, tszMsg, SIZEOF(tszMsg));
 
-					if (len == 0)
+					if (iMsgLen == 0)
 					{
+						char szSetting[80];
 						if (msgbox_data->m_szProto)
-						{
-							char setting[80];
-							mir_snprintf(setting, SIZEOF(setting), "Last%sMsg", msgbox_data->m_szProto);
-							DBWriteContactSettingString(NULL, "SimpleStatusMsg", setting, "");
+						{							
+							mir_snprintf(szSetting, SIZEOF(szSetting), "Last%sMsg", msgbox_data->m_szProto);
+							DBWriteContactSettingString(NULL, "SimpleStatusMsg", szSetting, "");
 
-							mir_snprintf(setting, SIZEOF(setting), "%sMsg", msgbox_data->m_szProto);
-							DBWriteContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, setting), _T(""));
+							mir_snprintf(szSetting, SIZEOF(szSetting), "%sMsg", msgbox_data->m_szProto);
+							DBWriteContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, szSetting), _T(""));
 						}
 						else
 						{
-							char setting[80];
 							DBWriteContactSettingString(NULL, "SimpleStatusMsg", "LastMsg", "");
 							for (int j = 0; j < accounts->count; j++)
 							{
@@ -1232,36 +1228,36 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 								if (!(CallProtoService(accounts->pa[j]->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND))
 									continue;
 
-								mir_snprintf(setting, SIZEOF(setting), "Last%sMsg", accounts->pa[j]->szModuleName);
-								DBWriteContactSettingString(NULL, "SimpleStatusMsg", setting, "");
+								mir_snprintf(szSetting, SIZEOF(szSetting), "Last%sMsg", accounts->pa[j]->szModuleName);
+								DBWriteContactSettingString(NULL, "SimpleStatusMsg", szSetting, "");
 
-								mir_snprintf(setting, SIZEOF(setting), "%sMsg", accounts->pa[j]->szModuleName);
-								DBWriteContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(GetCurrentStatus(accounts->pa[j]->szModuleName), setting), _T(""));
+								mir_snprintf(szSetting, SIZEOF(szSetting), "%sMsg", accounts->pa[j]->szModuleName);
+								iStatus = msgbox_data->m_bOnStartup ? GetStartupStatus(accounts->pa[j]->szModuleName) : GetCurrentStatus(accounts->pa[j]->szModuleName);
+								DBWriteContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(iStatus, szSetting), _T(""));
 							}
 
 							DBWriteContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, "Msg"), _T("")); // for compatibility with some plugins
 						}
 								
-						if (currentstatus)
+						if (bCurrentStatus)
 							SetStatusMessage(msgbox_data->m_szProto, msgbox_data->m_iInitialStatus, ID_STATUS_CURRENT, 0, msgbox_data->m_bOnStartup);
-						else if (profilestatus != 0)
-							SetStatusMessage(msgbox_data->m_szProto, msgbox_data->m_iInitialStatus, profilestatus, 0, FALSE);
+						else if (iProfileStatus != 0)
+							SetStatusMessage(msgbox_data->m_szProto, msgbox_data->m_iInitialStatus, iProfileStatus, 0, FALSE);
 						else
 							SetStatusMessage(msgbox_data->m_szProto, msgbox_data->m_iInitialStatus, msgbox_data->m_iStatus, 0, msgbox_data->m_bOnStartup);
 					}
 					else
 					{
 						char buff[64], buff2[80];
-						int i;
 						DBVARIANT dbv;
 						BOOL found = FALSE;
 
-						for (i = 1; i <= msgbox_data->max_hist_msgs; i++)
+						for (int i = 1; i <= msgbox_data->max_hist_msgs; i++)
 						{
 							mir_snprintf(buff, SIZEOF(buff), "SMsg%d", i);
 							if (!DBGetContactSettingTString(NULL, "SimpleStatusMsg", buff, &dbv))
 							{
-								if (!lstrcmp(dbv.ptszVal, msg))
+								if (!lstrcmp(dbv.ptszVal, tszMsg))
 								{
 									found = TRUE;
 									if (msgbox_data->m_szProto)
@@ -1270,7 +1266,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 										DBWriteContactSettingString(NULL, "SimpleStatusMsg", buff2, buff);
 
 										mir_snprintf(buff2, SIZEOF(buff2), "%sMsg", msgbox_data->m_szProto);
-										DBWriteContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, buff2), msg);
+										DBWriteContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, buff2), tszMsg);
 									}
 									else
 									{
@@ -1293,7 +1289,8 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 											DBWriteContactSettingString(NULL, "SimpleStatusMsg", buff2, buff);
 
 											mir_snprintf(buff2, SIZEOF(buff2), "%sMsg", accounts->pa[j]->szModuleName);
-											DBWriteContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(GetCurrentStatus(accounts->pa[j]->szModuleName), buff2), msg);
+											iStatus = msgbox_data->m_bOnStartup ? GetStartupStatus(accounts->pa[j]->szModuleName) : GetCurrentStatus(accounts->pa[j]->szModuleName);
+											DBWriteContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(iStatus, buff2), tszMsg);
 										}
 									}
 									DBFreeVariant(&dbv);
@@ -1312,7 +1309,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 								last_modified_msg++;
 
 							mir_snprintf(buff, SIZEOF(buff), "SMsg%d", last_modified_msg);
-							DBWriteContactSettingTString(NULL, "SimpleStatusMsg", buff, msg);
+							DBWriteContactSettingTString(NULL, "SimpleStatusMsg", buff, tszMsg);
 
 							if (msgbox_data->m_szProto)
 							{
@@ -1320,7 +1317,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 								DBWriteContactSettingString(NULL, "SimpleStatusMsg", buff2, buff);
 
 								mir_snprintf(buff2, SIZEOF(buff2), "%sMsg", msgbox_data->m_szProto);
-								DBWriteContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, buff2), msg);
+								DBWriteContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, buff2), tszMsg);
 							}
 							else
 							{
@@ -1343,21 +1340,22 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 									DBWriteContactSettingString(NULL, "SimpleStatusMsg", buff2, buff);
 
 									mir_snprintf(buff2, SIZEOF(buff2), "%sMsg", accounts->pa[j]->szModuleName);
-									DBWriteContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(GetCurrentStatus(accounts->pa[j]->szModuleName), buff2), msg);
+									iStatus = msgbox_data->m_bOnStartup ? GetStartupStatus(accounts->pa[j]->szModuleName) : GetCurrentStatus(accounts->pa[j]->szModuleName);
+									DBWriteContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(iStatus, buff2), tszMsg);
 								}
 							}
 							DBWriteContactSettingWord(NULL, "SimpleStatusMsg", "LMMsg", (WORD)last_modified_msg);
 						}
 
 						if (!msgbox_data->m_szProto)
-							DBWriteContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, "Msg"), msg); // for compatibility with some plugins
+							DBWriteContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, "Msg"), tszMsg); // for compatibility with some plugins
 
-						if (currentstatus)
-							SetStatusMessage(msgbox_data->m_szProto, msgbox_data->m_iInitialStatus, ID_STATUS_CURRENT, msg, msgbox_data->m_bOnStartup);
-						else if (profilestatus != 0)
-							SetStatusMessage(msgbox_data->m_szProto, msgbox_data->m_iInitialStatus, profilestatus, msg, FALSE);
+						if (bCurrentStatus)
+							SetStatusMessage(msgbox_data->m_szProto, msgbox_data->m_iInitialStatus, ID_STATUS_CURRENT, tszMsg, msgbox_data->m_bOnStartup);
+						else if (iProfileStatus != 0)
+							SetStatusMessage(msgbox_data->m_szProto, msgbox_data->m_iInitialStatus, iProfileStatus, tszMsg, FALSE);
 						else
-							SetStatusMessage(msgbox_data->m_szProto, msgbox_data->m_iInitialStatus, msgbox_data->m_iStatus, msg, msgbox_data->m_bOnStartup);
+							SetStatusMessage(msgbox_data->m_szProto, msgbox_data->m_iInitialStatus, msgbox_data->m_iStatus, tszMsg, msgbox_data->m_bOnStartup);
 					}
 				}
 				case IDCANCEL:
