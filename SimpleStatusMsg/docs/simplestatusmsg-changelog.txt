@@ -7,6 +7,18 @@ Simple Status Message plugin for Miranda IM Changelog
 
 
 ============================
+v 1.9.0.2 (2010/10/10):
+============================
++ Added ability to set per-contact status messages (using contact-related variables) for ICQ protocol
++ Added error message when failed to retrieve status message
+* Disabled periodic status message updating on ICQ protocol
+* Removed redundant 'Change Status Message' menu item from the main menu
+! Fixed startup status message issue
+! Fixed MS_AWAYMSG_GETSTATUSMSG service
+! Fixed setting the same status twice
+! Fixed possible crash on opening the contact menu
+
+============================
 v 1.9.0.1 (2010/08/29):
 ============================
 + Updater plugin support
