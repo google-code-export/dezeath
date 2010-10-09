@@ -1149,7 +1149,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 				int x, y;
 
 				wp.length = sizeof(wp);
-				GetWindowPlacement(hwndDlg,&wp);
+				GetWindowPlacement(hwndDlg, &wp);
 
 				x = (int)DBGetContactSettingDword(NULL, "SimpleStatusMsg", "Winx", -1);
 				y = (int)DBGetContactSettingDword(NULL, "SimpleStatusMsg", "Winy", -1);
@@ -1239,7 +1239,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 								DBWriteContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(GetCurrentStatus(accounts->pa[j]->szModuleName), setting), _T(""));
 							}
 
-							DBWriteContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, "Msg"), _T("")); //f or compatibility with some plugins
+							DBWriteContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, "Msg"), _T("")); // for compatibility with some plugins
 						}
 								
 						if (currentstatus)
@@ -1422,20 +1422,6 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 			}
 			if ((HWND)lParam == msgbox_data->recent_cbex)
 			{
-				BOOL curstatus = FALSE;
-				int profilestatus = 0;
-
-				if (msgbox_data->m_iStatus == ID_STATUS_CURRENT)
-				{
-					msgbox_data->m_iStatus = msgbox_data->m_bOnStartup ? GetStartupStatus(msgbox_data->m_szProto) : GetCurrentStatus(msgbox_data->m_szProto);
-					curstatus = TRUE;
-				}
-				else if (msgbox_data->m_iStatus >= ID_STATUS_CURRENT)
-				{
-					profilestatus = msgbox_data->m_iStatus;
-					msgbox_data->m_iStatus = GetCurrentStatus(NULL);
-				}
-
 				if (msgbox_data->m_iCountdown > -2)
 				{
 					KillTimer(hwndDlg,1);
@@ -1481,19 +1467,15 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 							{
 								ClearHistory(msgbox_data, cur_sel);
 							}
-							else
+							else if (IsWindowEnabled(GetDlgItem(hwndDlg, IDC_EDIT1)))
 							{
 								TCHAR msg[1024];
 								int fcursel = CB_ERR, num_start;
-								if (IsWindowEnabled(GetDlgItem(hwndDlg, IDC_EDIT1)))
-								{
-									num_start = SendMessage(msgbox_data->recent_cbex, CB_GETCOUNT, 0, 0);
-									num_start -= msgbox_data->num_def_msgs + 1;
-
-									GetDlgItemText(hwndDlg, IDC_EDIT1, msg, SIZEOF(msg));
-									fcursel = SendMessage(msgbox_data->recent_cbex, CB_FINDSTRINGEXACT, num_start, (LPARAM)msg);
-									SendMessage(msgbox_data->recent_cbex, CB_SETCURSEL, fcursel, 0);
-								}
+								num_start = SendMessage(msgbox_data->recent_cbex, CB_GETCOUNT, 0, 0);
+								num_start -= msgbox_data->num_def_msgs + 1;
+								GetDlgItemText(hwndDlg, IDC_EDIT1, msg, SIZEOF(msg));
+								fcursel = SendMessage(msgbox_data->recent_cbex, CB_FINDSTRINGEXACT, num_start, (LPARAM)msg);
+								SendMessage(msgbox_data->recent_cbex, CB_SETCURSEL, fcursel, 0);
 							}
 						}
 						else if (LOWORD(cbitem.lParam) == DELETE_SELECTED)
@@ -1566,10 +1548,6 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 						break;
 					}
 				}
-				if (curstatus)
-					msgbox_data->m_iStatus = ID_STATUS_CURRENT;
-				else if (profilestatus != 0)
-					msgbox_data->m_iStatus = profilestatus;
 			}
 			if ((HWND)lParam == GetDlgItem(hwndDlg, IDC_BADD))
 			{
