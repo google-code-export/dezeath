@@ -640,10 +640,6 @@ static TCHAR *GetAwayMessage(int iStatus, const char *szProto, HANDLE hContact)
 {
 	TCHAR *format = NULL, *ret;
 	char szSetting[80];
-	int flags;
-
-	if (szProto && !(CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_3, 0) & Proto_Status2Flag(iStatus)))
-		return NULL;
 
 	if ((!iStatus || iStatus == ID_STATUS_CURRENT) && szProto)
 	{
@@ -659,8 +655,13 @@ static TCHAR *GetAwayMessage(int iStatus, const char *szProto, HANDLE hContact)
 	}
 	else
 	{
+		int flags;
+
 		if (!iStatus || iStatus == ID_STATUS_CURRENT)
 			iStatus = GetCurrentStatus(szProto);
+
+		if (szProto && !(CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_3, 0) & Proto_Status2Flag(iStatus)))
+			return NULL;
 
 		if (szProto)
 		{
