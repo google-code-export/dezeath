@@ -476,9 +476,9 @@ TCHAR *InsertBuiltinVarsIntoMsg(TCHAR *in, const char *szProto, int status)
 
 	if (szProto)
 	{
-		char setting[64];
-		mir_snprintf(setting, SIZEOF(setting), "Proto%sMaxLen", szProto);
-		len = DBGetContactSettingWord(NULL, "SimpleStatusMsg", setting, 1024);
+		char szSetting[80];
+		mir_snprintf(szSetting, SIZEOF(szSetting), "Proto%sMaxLen", szProto);
+		len = DBGetContactSettingWord(NULL, "SimpleStatusMsg", szSetting, 1024);
 		if (len < lstrlen(msg))
 		{
 			msg = (TCHAR *)mir_realloc(msg, len * sizeof(TCHAR));
@@ -514,14 +514,14 @@ static TCHAR *GetAwayMessageFormat(int iStatus, const char *szProto)
 {
 	DBVARIANT dbv, dbv2;
 	int flags;
-	char setting[80];
+	char szSetting[80];
 	TCHAR *format;
 
 	if (szProto)
-		mir_snprintf(setting, SIZEOF(setting), "%sFlags", szProto);
+		mir_snprintf(szSetting, SIZEOF(szSetting), "%sFlags", szProto);
 	else
-		mir_snprintf(setting, SIZEOF(setting), "Flags");
-	flags = DBGetContactSettingByte(NULL, "SimpleStatusMsg", (char *)StatusModeToDbSetting(iStatus, setting), STATUS_SHOW_DLG | STATUS_LAST_MSG);
+		mir_snprintf(szSetting, SIZEOF(szSetting), "Flags");
+	flags = DBGetContactSettingByte(NULL, "SimpleStatusMsg", (char *)StatusModeToDbSetting(iStatus, szSetting), STATUS_SHOW_DLG | STATUS_LAST_MSG);
 
 	if (flags & STATUS_EMPTY_MSG)
 		return mir_tstrdup(_T(""));
@@ -529,11 +529,11 @@ static TCHAR *GetAwayMessageFormat(int iStatus, const char *szProto)
 	if (flags & STATUS_LAST_STATUS_MSG)
 	{
 		if (szProto)
-			mir_snprintf(setting, SIZEOF(setting), "%sMsg", szProto);
+			mir_snprintf(szSetting, SIZEOF(szSetting), "%sMsg", szProto);
 		else
-			mir_snprintf(setting, SIZEOF(setting), "Msg");
+			mir_snprintf(szSetting, SIZEOF(szSetting), "Msg");
 
-		if (DBGetContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(iStatus, setting), &dbv))
+		if (DBGetContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(iStatus, szSetting), &dbv))
 			return NULL; //mir_tstrdup(_T(""));
 
 		format = mir_tstrdup(dbv.ptszVal);
@@ -542,11 +542,11 @@ static TCHAR *GetAwayMessageFormat(int iStatus, const char *szProto)
 	else if (flags & STATUS_LAST_MSG)
 	{
 		if (szProto)
-			mir_snprintf(setting, SIZEOF(setting), "Last%sMsg", szProto);
+			mir_snprintf(szSetting, SIZEOF(szSetting), "Last%sMsg", szProto);
 		else
-			mir_snprintf(setting, SIZEOF(setting), "LastMsg");
+			mir_snprintf(szSetting, SIZEOF(szSetting), "LastMsg");
 
-		if (DBGetContactSetting(NULL, "SimpleStatusMsg", setting, &dbv2))
+		if (DBGetContactSetting(NULL, "SimpleStatusMsg", szSetting, &dbv2))
 			return NULL; //mir_tstrdup(_T(""));
 
 		if (DBGetContactSettingTString(NULL, "SimpleStatusMsg", dbv2.pszVal, &dbv))
@@ -562,11 +562,11 @@ static TCHAR *GetAwayMessageFormat(int iStatus, const char *szProto)
 	else if (flags & STATUS_THIS_MSG)
 	{
 		if (szProto)
-			mir_snprintf(setting, SIZEOF(setting), "%sDefault", szProto);
+			mir_snprintf(szSetting, SIZEOF(szSetting), "%sDefault", szProto);
 		else
-			mir_snprintf(setting, SIZEOF(setting), "Default");
+			mir_snprintf(szSetting, SIZEOF(szSetting), "Default");
 
-		if (DBGetContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(iStatus, setting), &dbv))
+		if (DBGetContactSettingTString(NULL, "SRAway", StatusModeToDbSetting(iStatus, szSetting), &dbv))
 			return mir_tstrdup(_T(""));
 
 		format = mir_tstrdup(dbv.ptszVal);
@@ -578,22 +578,17 @@ static TCHAR *GetAwayMessageFormat(int iStatus, const char *szProto)
 	return format;
 }
 
-void DBWriteMessage(char *buff, TCHAR *message)
+void DBWriteMessage(char *szSetting, TCHAR *tszMsg)
 {
-	if (message)
-	{
-		if (!lstrlen(message))
-			DBDeleteContactSetting(NULL, "SimpleStatusMsg", buff);
-		else
-			DBWriteContactSettingTString(NULL, "SimpleStatusMsg", buff, message);
-	}
+	if (tszMsg && lstrlen(tszMsg))
+		DBWriteContactSettingTString(NULL, "SimpleStatusMsg", szSetting, tszMsg);
 	else
-		DBDeleteContactSetting(NULL, "SimpleStatusMsg", buff);
+		DBDeleteContactSetting(NULL, "SimpleStatusMsg", szSetting);
 }
 
-void SaveMessageToDB(const char *szProto, TCHAR *message, BOOL is_format)
+void SaveMessageToDB(const char *szProto, TCHAR *tszMsg, BOOL bIsFormat)
 {
-	char setting[80];
+	char szSetting[80];
 		
 	if (!szProto)
 	{
@@ -608,17 +603,13 @@ void SaveMessageToDB(const char *szProto, TCHAR *message, BOOL is_format)
 			if (!(CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND))
 				continue;
 
-			if (is_format)
-				mir_snprintf(setting, SIZEOF(setting), "FCur%sMsg", accounts->pa[i]->szModuleName);
-			else
-				mir_snprintf(setting, SIZEOF(setting), "Cur%sMsg", accounts->pa[i]->szModuleName);
-			DBWriteMessage(setting, message);
-
+			mir_snprintf(szSetting, SIZEOF(szSetting), bIsFormat ? "FCur%sMsg" : "Cur%sMsg", accounts->pa[i]->szModuleName);
+			DBWriteMessage(szSetting, tszMsg);
 #ifdef _DEBUG
-			if (is_format)
-				log2file("SaveMessageToDB(): Set \"" TCHAR_STR_PARAM "\" status message (without inserted vars) for %s.", message, accounts->pa[i]->szModuleName);
+			if (bIsFormat)
+				log2file("SaveMessageToDB(): Set \"" TCHAR_STR_PARAM "\" status message (without inserted vars) for %s.", tszMsg, accounts->pa[i]->szModuleName);
 			else
-				log2file("SaveMessageToDB(): Set \"" TCHAR_STR_PARAM "\" status message for %s.", message, accounts->pa[i]->szModuleName);
+				log2file("SaveMessageToDB(): Set \"" TCHAR_STR_PARAM "\" status message for %s.", tszMsg, accounts->pa[i]->szModuleName);
 #endif
 		}
 	}
@@ -627,26 +618,22 @@ void SaveMessageToDB(const char *szProto, TCHAR *message, BOOL is_format)
 		if (!(CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND))
 			return;
 
-		if (is_format)
-			mir_snprintf(setting, SIZEOF(setting), "FCur%sMsg", szProto);
-		else
-			mir_snprintf(setting, SIZEOF(setting), "Cur%sMsg", szProto);
-		DBWriteMessage(setting, message);
-
+		mir_snprintf(szSetting, SIZEOF(szSetting), bIsFormat ? "FCur%sMsg" : "Cur%sMsg", szProto);
+		DBWriteMessage(szSetting, tszMsg);
 #ifdef _DEBUG
-		if (is_format)
-			log2file("SaveMessageToDB(): Set \"" TCHAR_STR_PARAM "\" status message (without inserted vars) for %s.", message, szProto);
+		if (bIsFormat)
+			log2file("SaveMessageToDB(): Set \"" TCHAR_STR_PARAM "\" status message (without inserted vars) for %s.", tszMsg, szProto);
 		else
-			log2file("SaveMessageToDB(): Set \"" TCHAR_STR_PARAM "\" status message for %s.", message, szProto);
+			log2file("SaveMessageToDB(): Set \"" TCHAR_STR_PARAM "\" status message for %s.", tszMsg, szProto);
 #endif
 	}
 }
 
 void SaveStatusAsCurrent(const char *szProto, int iStatus)
 {
-	char setting[80];
-	mir_snprintf(setting, SIZEOF(setting), "Cur%sStatus", szProto);
-	DBWriteContactSettingWord(NULL, "SimpleStatusMsg", setting, (WORD)iStatus);
+	char szSetting[80];
+	mir_snprintf(szSetting, SIZEOF(szSetting), "Cur%sStatus", szProto);
+	DBWriteContactSettingWord(NULL, "SimpleStatusMsg", szSetting, (WORD)iStatus);
 }
 
 static TCHAR *GetAwayMessage(int iStatus, const char *szProto, HANDLE hContact)
@@ -793,16 +780,17 @@ static void Proto_SetStatus(const char *szProto, int iInitialStatus, int iStatus
 	}
 
 	Proto_SetAwayMsgT(szProto, iStatus, tszMsg /* ? tszMsg : _T("")*/);
-	CallProtoService(szProto, PS_SETSTATUS, iStatus, 0);
+	if (iStatus != iInitialStatus)
+		CallProtoService(szProto, PS_SETSTATUS, iStatus, 0);
 }
 
 int HasProtoStaticStatusMsg(const char *szProto, int iInitialStatus, int iStatus)
 {
-	char setting[80];
+	char szSetting[80];
 	int flags;
 
-	mir_snprintf(setting, SIZEOF(setting), "Proto%sFlags", szProto);
-	flags = DBGetContactSettingByte(NULL, "SimpleStatusMsg", setting, PROTO_POPUPDLG);
+	mir_snprintf(szSetting, SIZEOF(szSetting), "Proto%sFlags", szProto);
+	flags = DBGetContactSettingByte(NULL, "SimpleStatusMsg", szSetting, PROTO_POPUPDLG);
 
 	if (flags & PROTO_NO_MSG)
 	{
@@ -816,8 +804,8 @@ int HasProtoStaticStatusMsg(const char *szProto, int iInitialStatus, int iStatus
 		DBVARIANT dbv;
 		TCHAR *msg;
 
-		mir_snprintf(setting, SIZEOF(setting), "Proto%sDefault", szProto);
-		if (!DBGetContactSettingTString(NULL, "SimpleStatusMsg", setting, &dbv))
+		mir_snprintf(szSetting, SIZEOF(szSetting), "Proto%sDefault", szProto);
+		if (!DBGetContactSettingTString(NULL, "SimpleStatusMsg", szSetting, &dbv))
 		{
 			SaveMessageToDB(szProto, dbv.ptszVal, TRUE);
 			msg = InsertVarsIntoMsg(dbv.ptszVal, szProto, iStatus, NULL);
@@ -893,7 +881,9 @@ int ChangeStatusMessage(WPARAM wParam, LPARAM lParam);
 void SetStatusMessage(const char *szProto, int iInitialStatus, int iStatus, TCHAR *message, BOOL bOnStartup)
 {
 	TCHAR *msg = NULL;
-//	log2file("SetStatusMessage(\"%s\", %d, %d, \"%s\", %d)", szProto, iInitialStatus, iStatus, message, bOnStartup);
+#ifdef _DEBUG
+	log2file("SetStatusMessage(\"%s\", %d, %d, \"" TCHAR_STR_PARAM "\", %d)", szProto, iInitialStatus, iStatus, message, bOnStartup);
+#endif
 	if (szProto)
 	{
 		if (bOnStartup && accounts->statusCount > 1) // TODO not only at startup?
@@ -909,7 +899,8 @@ void SetStatusMessage(const char *szProto, int iInitialStatus, int iStatus, TCHA
 
 				status = iStatus == ID_STATUS_CURRENT ? GetStartupStatus(accounts->pa[i]->szModuleName) : iStatus;
 
-				if (!CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_3, 0) || !(CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND))
+				if (!CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_3, 0) ||
+					!(CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND))
 				{
 					if (!(bOnStartup && status == ID_STATUS_OFFLINE) && GetCurrentStatus(accounts->pa[i]->szModuleName) != status)
 						CallProtoService(accounts->pa[i]->szModuleName, PS_SETSTATUS, (WPARAM)status, 0);
@@ -924,7 +915,7 @@ void SetStatusMessage(const char *szProto, int iInitialStatus, int iStatus, TCHA
 		SaveMessageToDB(szProto, msg, FALSE);
 
 		if (iInitialStatus == ID_STATUS_CURRENT)
-			iInitialStatus = bOnStartup ? GetStartupStatus(szProto) : GetCurrentStatus(szProto);
+			iInitialStatus = bOnStartup ? ID_STATUS_OFFLINE : GetCurrentStatus(szProto);
 
 		Proto_SetStatus(szProto, iInitialStatus, iStatus, msg);
 		mir_free(msg);
@@ -964,21 +955,21 @@ void SetStatusMessage(const char *szProto, int iInitialStatus, int iStatus, TCHA
 			if (bIsStatusCurrent)
 				iStatus = bOnStartup ? GetStartupStatus(accounts->pa[i]->szModuleName) : GetCurrentStatus(accounts->pa[i]->szModuleName);
 
-			if (!CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_3, 0) ||
+			if (bIsInitialStatusCurrent)
+				iInitialStatus = bOnStartup ? ID_STATUS_OFFLINE : GetCurrentStatus(accounts->pa[i]->szModuleName);
+
+			if (!(CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_3, 0) & Proto_Status2Flag(iStatus)) ||
 				!(CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND))
 			{
-				if (!(bOnStartup && iStatus == ID_STATUS_OFFLINE) && GetCurrentStatus(accounts->pa[i]->szModuleName) != iStatus)
+				if (!(bOnStartup && iStatus == ID_STATUS_OFFLINE) && GetCurrentStatus(accounts->pa[i]->szModuleName) != iStatus && iStatus != iInitialStatus)
 				{
 					CallProtoService(accounts->pa[i]->szModuleName, PS_SETSTATUS, (WPARAM)iStatus, 0);
-//#ifdef _DEBUG
-//					log2file("SetStatusMessage(): Set %s status for %s.", StatusModeToDbSetting(iStatus, ""), accounts->pa[i]->szModuleName);
-//#endif
+#ifdef _DEBUG
+					log2file("SetStatusMessage(): Set %s status for %s.", StatusModeToDbSetting(iStatus, ""), accounts->pa[i]->szModuleName);
+#endif
 				}
 				continue;
 			}
-
-			if (bIsInitialStatusCurrent)
-				iInitialStatus = bOnStartup ? GetStartupStatus(accounts->pa[i]->szModuleName) : GetCurrentStatus(accounts->pa[i]->szModuleName);
 
 			if (HasProtoStaticStatusMsg(accounts->pa[i]->szModuleName, iInitialStatus, iStatus))
 				continue;
@@ -1134,13 +1125,13 @@ static int ChangeStatusMessage(WPARAM wParam, LPARAM lParam)
 {
 	int iStatus = (int)wParam;
 	char *szProto = (char*)lParam;
-	int status_modes = 0, status_modes_msg = 0, iDlgFlags;
+	int iDlgFlags;
 	BOOL bShowDlg, bOnStartup = FALSE, bGlobalStartupStatus = TRUE, bScreenSaverRunning = FALSE;
-	char setting[80];
+	char szSetting[80];
 
 	if (Miranda_Terminated()) return 0;
 
-	// TODO this can be done better
+	// TODO this could be done better
 	if (szProto && !strcmp(szProto, "SimpleStatusMsgGlobalStartupStatus"))
 	{
 		szProto = NULL;
@@ -1171,37 +1162,37 @@ static int ChangeStatusMessage(WPARAM wParam, LPARAM lParam)
 	}
 
 	if (szProto)
-		mir_snprintf(setting, SIZEOF(setting), "%sFlags", szProto);
+		mir_snprintf(szSetting, SIZEOF(szSetting), "%sFlags", szProto);
 	else
-		mir_snprintf(setting, SIZEOF(setting), "Flags");
-	iDlgFlags = DBGetContactSettingByte(NULL, "SimpleStatusMsg", (char *)StatusModeToDbSetting(iStatus, setting), STATUS_SHOW_DLG | STATUS_LAST_MSG);
+		mir_snprintf(szSetting, SIZEOF(szSetting), "Flags");
+	iDlgFlags = DBGetContactSettingByte(NULL, "SimpleStatusMsg", (char *)StatusModeToDbSetting(iStatus, szSetting), STATUS_SHOW_DLG | STATUS_LAST_MSG);
 	bShowDlg = iDlgFlags & STATUS_SHOW_DLG || bOnStartup;
 	SystemParametersInfo(SPI_GETSCREENSAVERRUNNING, 0, &bScreenSaverRunning, 0);
 
 	if (szProto)
 	{
 		struct MsgBoxInitData *box_data;
-		int iProtoFlags;
+		int status_modes = 0, status_modes_msg = 0, iProtoFlags;
 
 		status_modes = CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_2, 0)&~CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_5, 0);
-		if (!status_modes || (!(Proto_Status2Flag(iStatus) & status_modes) && iStatus != ID_STATUS_OFFLINE))
+		if (!(Proto_Status2Flag(iStatus) & status_modes) && iStatus != ID_STATUS_OFFLINE)
 			return 0;
 
 		status_modes_msg = CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_3, 0);
-		if (!status_modes_msg || !(Proto_Status2Flag(iStatus) & status_modes_msg) || !(CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND))
+		if (!(Proto_Status2Flag(iStatus) & status_modes_msg) || !(CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND))
 		{
-			if (GetCurrentStatus(szProto) != iStatus)
+			if (bOnStartup && GetCurrentStatus(szProto) != iStatus)
 			{
 				CallProtoService(szProto, PS_SETSTATUS, iStatus, 0);
-//#ifdef _DEBUG
-//				log2file("ChangeStatusMessage(): %s status mode = %s.", szProto, StatusModeToDbSetting(GetCurrentStatus(szProto), ""));
-//#endif
+#ifdef _DEBUG
+				log2file("ChangeStatusMessage(): Set %s status for %s.", StatusModeToDbSetting(iStatus, ""), szProto);
+#endif
 			}
 			return 0;
 		}
 
-		mir_snprintf(setting, SIZEOF(setting), "Proto%sFlags", szProto);
-		iProtoFlags = DBGetContactSettingByte(NULL, "SimpleStatusMsg", setting, PROTO_POPUPDLG);
+		mir_snprintf(szSetting, SIZEOF(szSetting), "Proto%sFlags", szProto);
+		iProtoFlags = DBGetContactSettingByte(NULL, "SimpleStatusMsg", szSetting, PROTO_POPUPDLG);
 		if (iProtoFlags & PROTO_NO_MSG || iProtoFlags & PROTO_THIS_MSG)
 		{
 			if (HasProtoStaticStatusMsg(szProto, iStatus, iStatus))
@@ -1212,8 +1203,8 @@ static int ChangeStatusMessage(WPARAM wParam, LPARAM lParam)
 			DBVARIANT dbv;
 			TCHAR *msg = NULL;
 
-			mir_snprintf(setting, SIZEOF(setting), "FCur%sMsg", szProto);
-			if (!DBGetContactSettingTString(NULL, "SimpleStatusMsg", setting, &dbv))
+			mir_snprintf(szSetting, SIZEOF(szSetting), "FCur%sMsg", szProto);
+			if (!DBGetContactSettingTString(NULL, "SimpleStatusMsg", szSetting, &dbv))
 			{
 				msg = mir_tstrdup(dbv.ptszVal);
 				DBFreeVariant(&dbv);
@@ -1248,7 +1239,7 @@ static int ChangeStatusMessage(WPARAM wParam, LPARAM lParam)
 		if (GetCurrentStatus(szProto) == iStatus || (bOnStartup && !bGlobalStartupStatus))
 			box_data->m_iStatus = ID_STATUS_CURRENT;
 		else
-			box_data->m_iStatus = iStatus; 
+			box_data->m_iStatus = iStatus;
 
 		box_data->m_iStatusModes = status_modes;
 		box_data->m_iStatusMsgModes = status_modes_msg;
@@ -1266,31 +1257,10 @@ static int ChangeStatusMessage(WPARAM wParam, LPARAM lParam)
 
 		// iStatus == ID_STATUS_CURRENT only when bOnStartup == TRUE
 		if (iStatus == ID_STATUS_OFFLINE || (!(accounts->statusMsgFlags & Proto_Status2Flag(iStatus)) && iStatus != ID_STATUS_CURRENT))
-		{
-			for (int i = 0; i < accounts->count; ++i)
-			{
-				if (!IsAccountEnabled(accounts->pa[i]))
-					continue;
-
-				if (!(CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_2, 0)&~CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_5, 0)))
-					continue;
-
-				if (DBGetContactSettingByte(NULL, accounts->pa[i]->szModuleName, "LockMainStatus", 0))
-					continue;
-
-				if (GetCurrentStatus(accounts->pa[i]->szModuleName) != iStatus)
-				{
-					CallProtoService(accounts->pa[i]->szModuleName, PS_SETSTATUS, iStatus, 0);
-//#ifdef _DEBUG
-//					log2file("ChangeStatusMessage(): Set %s status for %s.", StatusModeToDbSetting(iStatus, ""), accounts->pa[i]->szModuleName);
-//#endif
-				}
-			}
 			return 0;
-		}
 
 		iProtoFlags = DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ProtoFlags", PROTO_NOCHANGE);
-		if (!bShowDlg  || bScreenSaverRunning || (iProtoFlags & PROTO_NOCHANGE && !bOnStartup))
+		if (!bShowDlg || bScreenSaverRunning || (iProtoFlags & PROTO_NOCHANGE && !bOnStartup))
 		{
 			TCHAR *msg = NULL;
 			for (int i = 0; i < accounts->count; ++i)
@@ -1304,23 +1274,15 @@ static int ChangeStatusMessage(WPARAM wParam, LPARAM lParam)
 				if (DBGetContactSettingByte(NULL, accounts->pa[i]->szModuleName, "LockMainStatus", 0))
 					continue;
 
-				if (!CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_3, 0) || !(CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND))
-				{
-					if (GetCurrentStatus(accounts->pa[i]->szModuleName) != iStatus)
-					{
-						CallProtoService(accounts->pa[i]->szModuleName, PS_SETSTATUS, iStatus, 0);
-//#ifdef _DEBUG
-//						log2file("ChangeStatusMessage(): Set %s status for %s.", StatusModeToDbSetting(iStatus, ""), accounts->pa[i]->szModuleName);
-//#endif
-					}
+				if (!(CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_3, 0) & Proto_Status2Flag(iStatus)) ||
+					!(CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND))
 					continue;
-				}
 
 				if (iProtoFlags & PROTO_NOCHANGE)
 				{
 					DBVARIANT dbv;
-					mir_snprintf(setting, SIZEOF(setting), "FCur%sMsg", accounts->pa[i]->szModuleName);
-					if (!DBGetContactSettingTString(NULL, "SimpleStatusMsg", setting, &dbv))
+					mir_snprintf(szSetting, SIZEOF(szSetting), "FCur%sMsg", accounts->pa[i]->szModuleName);
+					if (!DBGetContactSettingTString(NULL, "SimpleStatusMsg", szSetting, &dbv))
 					{
 						msg = mir_tstrdup(dbv.ptszVal);
 						DBFreeVariant(&dbv);
@@ -1463,7 +1425,7 @@ static int ProcessProtoAck(WPARAM wParam,LPARAM lParam)
 int SetStartupStatus(int i)
 {
 	int flags;
-	char setting[80];
+	char szSetting[80];
 	TCHAR *fmsg = NULL, *msg = NULL;
 	int iStatus = GetStartupStatus(accounts->pa[i]->szModuleName);
 
@@ -1477,8 +1439,8 @@ int SetStartupStatus(int i)
 		return -1;
 	}
 
-	mir_snprintf(setting, SIZEOF(setting), "Proto%sFlags", accounts->pa[i]->szModuleName);
-	flags = DBGetContactSettingByte(NULL, "SimpleStatusMsg", setting, PROTO_POPUPDLG);
+	mir_snprintf(szSetting, SIZEOF(szSetting), "Proto%sFlags", accounts->pa[i]->szModuleName);
+	flags = DBGetContactSettingByte(NULL, "SimpleStatusMsg", szSetting, PROTO_POPUPDLG);
 	if (flags & PROTO_NO_MSG || flags & PROTO_THIS_MSG)
 	{
 		if (HasProtoStaticStatusMsg(accounts->pa[i]->szModuleName, ID_STATUS_OFFLINE, iStatus))
@@ -1487,8 +1449,8 @@ int SetStartupStatus(int i)
 	else if (flags & PROTO_NOCHANGE)
 	{
 		DBVARIANT dbv;
-		mir_snprintf(setting, SIZEOF(setting), "FCur%sMsg", accounts->pa[i]->szModuleName);
-		if (!DBGetContactSettingTString(NULL, "SimpleStatusMsg", setting, &dbv))
+		mir_snprintf(szSetting, SIZEOF(szSetting), "FCur%sMsg", accounts->pa[i]->szModuleName);
+		if (!DBGetContactSettingTString(NULL, "SimpleStatusMsg", szSetting, &dbv))
 		{
 			fmsg = mir_tstrdup(dbv.ptszVal);
 			DBFreeVariant(&dbv);
@@ -1512,7 +1474,7 @@ int SetStartupStatus(int i)
 	if (fmsg)
 		mir_free(fmsg);
 
-	Proto_SetStatus(accounts->pa[i]->szModuleName, iStatus, iStatus, msg /*? msg : _T("")*/);
+	Proto_SetStatus(accounts->pa[i]->szModuleName, ID_STATUS_OFFLINE, iStatus, msg /*? msg : _T("")*/);
 	mir_free(msg);
 
 	return 0;
@@ -1766,7 +1728,7 @@ static int ChangeStatusMsgPrebuild(WPARAM wParam, LPARAM lParam)
 
 	for (i = 0; i < count; ++i)
 	{
-		char setting[80];
+		char szSetting[80];
 		TCHAR buf[256];
 		int flags;
 
@@ -1782,8 +1744,8 @@ static int ChangeStatusMsgPrebuild(WPARAM wParam, LPARAM lParam)
 		if (!pa[i]->bIsVisible)
 			continue;
 
-		mir_snprintf(setting, SIZEOF(setting), "Proto%sFlags", pa[i]->szModuleName);
-		flags = DBGetContactSettingByte(NULL, "SimpleStatusMsg", setting, PROTO_POPUPDLG);
+		mir_snprintf(szSetting, SIZEOF(szSetting), "Proto%sFlags", pa[i]->szModuleName);
+		flags = DBGetContactSettingByte(NULL, "SimpleStatusMsg", szSetting, PROTO_POPUPDLG);
 		if (flags & PROTO_NO_MSG || flags & PROTO_THIS_MSG)
 			continue;
 
@@ -1804,7 +1766,7 @@ static int CSStatusChange(WPARAM wParam, LPARAM lParam)
 {
 	PROTOCOLSETTINGEX** ps = *(PROTOCOLSETTINGEX***)wParam;
 	int status_mode, CSProtoCount;
-	char setting[80];
+	char szSetting[80];
 	TCHAR *msg = NULL;
 
 	if (ps == NULL) return -1;
@@ -1851,8 +1813,8 @@ static int CSStatusChange(WPARAM wParam, LPARAM lParam)
 #endif
 					{
 						found = TRUE;
-						mir_snprintf(setting, SIZEOF(setting), "Last%sMsg", ps[i]->szName);
-						DBWriteContactSettingString(NULL, "SimpleStatusMsg", setting, buff);
+						mir_snprintf(szSetting, SIZEOF(szSetting), "Last%sMsg", ps[i]->szName);
+						DBWriteContactSettingString(NULL, "SimpleStatusMsg", szSetting, buff);
 						DBFreeVariant(&dbv);
 						break;
 					}
@@ -1862,18 +1824,18 @@ static int CSStatusChange(WPARAM wParam, LPARAM lParam)
 			if (!found)
 			{
 				mir_snprintf(buff, SIZEOF(buff), "FCur%sMsg", ps[i]->szName);
-				mir_snprintf(setting, SIZEOF(setting), "Last%sMsg", ps[i]->szName);
-				DBWriteContactSettingString(NULL, "SimpleStatusMsg", setting, buff);
+				mir_snprintf(szSetting, SIZEOF(szSetting), "Last%sMsg", ps[i]->szName);
+				DBWriteContactSettingString(NULL, "SimpleStatusMsg", szSetting, buff);
 			}
 
-			mir_snprintf(setting, SIZEOF(setting), "%sMsg", ps[i]->szName);
+			mir_snprintf(szSetting, SIZEOF(szSetting), "%sMsg", ps[i]->szName);
 #ifdef _UNICODE
-			DBWriteContactSettingWString(NULL, "SRAway", StatusModeToDbSetting(status_mode, setting), szMsgW);
+			DBWriteContactSettingWString(NULL, "SRAway", StatusModeToDbSetting(status_mode, szSetting), szMsgW);
 			msg = InsertVarsIntoMsg(szMsgW, ps[i]->szName, status_mode, NULL);
 			SaveMessageToDB(ps[i]->szName, szMsgW, TRUE);
 			mir_free(szMsgW);
 #else
-			DBWriteContactSettingString(NULL, "SRAway", StatusModeToDbSetting(status_mode, setting), ps[i]->szMsg);
+			DBWriteContactSettingString(NULL, "SRAway", StatusModeToDbSetting(status_mode, szSetting), ps[i]->szMsg);
 			msg = InsertVarsIntoMsg(ps[i]->szMsg, ps[i]->szName, status_mode, NULL);
 			SaveMessageToDB(ps[i]->szName, ps[i]->szMsg, TRUE);
 #endif
@@ -1924,7 +1886,7 @@ int ICQMsgTypeToStatus(int iMsgType)
 static int OnICQStatusMsgRequest(WPARAM wParam, LPARAM lParam, LPARAM lMirParam)
 {
 #ifdef _DEBUG
-	log2file("OnICQStatusMsgRequest(): %s", (char *)lMirParam);
+	log2file("OnICQStatusMsgRequest(): UIN: %d on %s", (int)lParam, (char *)lMirParam);
 #endif
 
 	HANDLE hContact;
@@ -2072,7 +2034,7 @@ static int OnModulesLoaded(WPARAM wParam, LPARAM lParam)
 		}
 		else
 		{
-			char setting[80];
+			char szSetting[80];
 
 			SASetStatusTimer = (UINT *)mir_alloc(sizeof(UINT) * accounts->count);
 			for (int i = 0; i < accounts->count; ++i)
@@ -2083,8 +2045,8 @@ static int OnModulesLoaded(WPARAM wParam, LPARAM lParam)
 				if (!(CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_2, 0)&~CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_5, 0)))
 					continue;
 
-				mir_snprintf(setting, SIZEOF(setting), "Set%sStatusDelay", accounts->pa[i]->szModuleName);
-				SASetStatusTimer[i] = SetTimer(NULL, 0, DBGetContactSettingWord(NULL, "SimpleStatusMsg", setting, 300), (TIMERPROC)SetStartupStatusProc);
+				mir_snprintf(szSetting, SIZEOF(szSetting), "Set%sStatusDelay", accounts->pa[i]->szModuleName);
+				SASetStatusTimer[i] = SetTimer(NULL, 0, DBGetContactSettingWord(NULL, "SimpleStatusMsg", szSetting, 300), (TIMERPROC)SetStartupStatusProc);
 			}
 		}
 	}
@@ -2096,7 +2058,7 @@ static int OnOkToExit(WPARAM wParam, LPARAM lParam)
 {
 	if (accounts->statusCount)
 	{
-		char setting[80];
+		char szSetting[80];
 		
 		for (int i = 0; i < accounts->count; ++i)
 		{
@@ -2106,8 +2068,8 @@ static int OnOkToExit(WPARAM wParam, LPARAM lParam)
 			if (!(CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_2, 0) &~ CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_5, 0)))
 				continue;
 			
-			mir_snprintf(setting, SIZEOF(setting), "Last%sStatus", accounts->pa[i]->szModuleName);
-			DBWriteContactSettingWord(NULL, "SimpleStatusMsg", setting, (WORD)CallProtoService(accounts->pa[i]->szModuleName, PS_GETSTATUS, 0, 0));
+			mir_snprintf(szSetting, SIZEOF(szSetting), "Last%sStatus", accounts->pa[i]->szModuleName);
+			DBWriteContactSettingWord(NULL, "SimpleStatusMsg", szSetting, (WORD)CallProtoService(accounts->pa[i]->szModuleName, PS_GETSTATUS, 0, 0));
 		}
 
 		if (winampsong && lstrcmp(winampsong, _T("SimpleStatusMsg")) /*&& DBGetContactSettingByte(NULL, "SimpleStatusMsg", "AmpLeaveTitle", 1)*/)
