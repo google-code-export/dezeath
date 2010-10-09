@@ -837,7 +837,7 @@ void ChangeDlgStatus(HWND hwndDlg, struct MsgBoxData *msgbox_data, int iStatus)
 		CallService(MS_SS_GETPROFILENAME, iStatus - 40083, (LPARAM)buff1);
 		MultiByteToWideChar(CallService(MS_LANGPACK_GETCODEPAGE, 0, 0), 0, buff1, -1, buff, 128);
 #else
-		CallService(MS_SS_GETPROFILENAME, status-40083, (LPARAM)buff);
+		CallService(MS_SS_GETPROFILENAME, iStatus - 40083, (LPARAM)buff);
 #endif
 		mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("%s Status Message: %s"), szProtoName, (TCHAR*)buff);
 	}
