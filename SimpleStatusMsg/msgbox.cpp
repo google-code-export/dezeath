@@ -1132,7 +1132,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 			mir_free(init_data);
 
 			MainDlgProc = (WNDPROC)SetWindowLongPtr(GetDlgItem(hwndDlg, IDC_EDIT1), GWLP_WNDPROC, (LONG_PTR)EditBoxSubProc);
-			if (!init_data->m_bOnEvent)
+			if (!init_data->m_bOnEvent && IsWindowEnabled(GetDlgItem(hwndDlg, IDC_EDIT1)))
 			{
 				SetFocus(GetDlgItem(hwndDlg, IDC_EDIT1));
 				SendMessage(GetDlgItem(hwndDlg, IDC_EDIT1), EM_SETSEL, 0, -1);
