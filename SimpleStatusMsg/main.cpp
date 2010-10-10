@@ -1586,9 +1586,6 @@ VOID CALLBACK SAUpdateMsgTimerProc(HWND timerhwnd, UINT uMsg, UINT_PTR idEvent, 
 			if (!IsAccountEnabled(accounts->pa[i]))
 				continue;
 
-			if (!strcmp(accounts->pa[i]->szProtoName, "ICQ"))
-				continue;
-
 			if (!CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_3, 0))
 				continue;
 
