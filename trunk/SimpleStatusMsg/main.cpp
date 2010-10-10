@@ -27,6 +27,7 @@ struct MM_INTERFACE mmi;
 PROTOACCOUNTS *accounts;
 
 static int StatusMenuItemCount;
+static int g_iIdleTime = -1;
 UINT SAUpdateMsgTimer = 0, *SASetStatusTimer;
 static TCHAR *winampsong;
 HANDLE TopButton = 0, h_statusmodechange;
@@ -167,6 +168,16 @@ static TCHAR *GetWinampSong(void)
 	mir_free(szTitle);
 
 	return res;
+}
+
+static int OnIdleChanged(WPARAM, LPARAM lParam)
+{
+#ifdef _DEBUG
+	log2file("OnIdleChanged()");
+#endif
+	if (!(lParam & IDF_ISIDLE))
+		g_iIdleTime = -1;
+	return 0;
 }
 
 TCHAR *InsertBuiltinVarsIntoMsg(TCHAR *in, const char *szProto, int status)
@@ -326,8 +337,12 @@ TCHAR *InsertBuiltinVarsIntoMsg(TCHAR *in, const char *szProto, int status)
 				int mm;
 				SYSTEMTIME t;
 				GetLocalTime(&t);
-				mm = t.wMinute + t.wHour * 60 - mii.idleTime;
-				if (mm < 0) mm += 60 * 24;
+				if ((mm = g_iIdleTime) == -1)
+				{
+					mm = t.wMinute + t.wHour * 60 - mii.idleTime;
+					if (mm < 0) mm += 60 * 24;
+					g_iIdleTime = mm;
+				}
 				t.wMinute = mm % 60;
 				t.wHour = mm / 60;
 				GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &t, NULL, substituteStr, SIZEOF(substituteStr));
@@ -1600,14 +1615,14 @@ VOID CALLBACK SAUpdateMsgTimerProc(HWND timerhwnd, UINT uMsg, UINT_PTR idEvent, 
 				continue;
 
 			mir_snprintf(buff, SIZEOF(buff), "FCur%sMsg", accounts->pa[i]->szModuleName);
-			if (DBGetContactSettingTString(NULL,"SimpleStatusMsg", buff, &dbv))
+			if (DBGetContactSettingTString(NULL, "SimpleStatusMsg", buff, &dbv))
 				continue;
 
 			msg = InsertVarsIntoMsg(dbv.ptszVal, accounts->pa[i]->szModuleName, status, NULL);
 			DBFreeVariant(&dbv);
 
 			mir_snprintf(buff, SIZEOF(buff), "Cur%sMsg", accounts->pa[i]->szModuleName);
-			if (!DBGetContactSettingTString(NULL,"SimpleStatusMsg", buff, &dbv))
+			if (!DBGetContactSettingTString(NULL, "SimpleStatusMsg", buff, &dbv))
 			{
 				if (!lstrcmp(msg, dbv.ptszVal))
 				{
@@ -1988,6 +2003,7 @@ static int OnModulesLoaded(WPARAM wParam, LPARAM lParam)
 	HookEventEx(ME_OPT_INITIALISE, InitOptions);
 	h_statusmodechange = HookEvent(ME_CLIST_STATUSMODECHANGE, ChangeStatusMessage);
 	HookEventEx(ME_PROTO_ACK, ProcessProtoAck);
+	HookEventEx(ME_IDLE_CHANGED, OnIdleChanged);
 
 	HookEventEx(ME_CLIST_PREBUILDSTATUSMENU, ChangeStatusMsgPrebuild);
 	ChangeStatusMsgPrebuild(0, 0);
