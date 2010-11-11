@@ -26,13 +26,11 @@ PLUGINLINK *pluginLink;
 struct MM_INTERFACE mmi;
 PROTOACCOUNTS *accounts;
 
-static int StatusMenuItemCount;
 static int g_iIdleTime = -1;
 UINT SAUpdateMsgTimer = 0, *SASetStatusTimer;
 static TCHAR *winampsong;
 HANDLE TopButton = 0, h_statusmodechange;
 HWND hwndSAMsgDialog;
-static HANDLE hGlobalStatusMenuItem = NULL;
 static HANDLE *hProtoStatusMenuItem;
 
 PLUGININFOEX pluginInfo = {
@@ -1699,13 +1697,30 @@ static int ChangeStatusMsgPrebuild(WPARAM wParam, LPARAM lParam)
 #ifdef _DEBUG
 	log2file("ChangeStatusMsgPrebuild()");
 #endif
-	if (!accounts->statusMsgFlags)
+	PROTOACCOUNT **pa;
+	int iStatusMenuItemCount = 0, count, i;
+	DWORD iStatusMsgFlags = 0;
+
+	ProtoEnumAccounts(&count, &pa);
+	hProtoStatusMenuItem = (HANDLE *)mir_realloc(hProtoStatusMenuItem, sizeof(HANDLE) * count);
+	for (i = 0; i < count; ++i)
+	{
+		if (!IsAccountEnabled(pa[i]))
+			continue;
+
+		if (CallProtoService(pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND)
+			iStatusMsgFlags |= CallProtoService(pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_3,0);
+
+		if (!pa[i]->bIsVisible)
+			continue;
+
+		iStatusMenuItemCount++;
+	}
+
+	if (!iStatusMsgFlags || !iStatusMenuItemCount)
 		return 0;
 
-	PROTOACCOUNT **pa;
-	int count, i;
 	CLISTMENUITEM mi = {0};
-
 	mi.cbSize = sizeof(mi);
 	mi.flags = CMIF_ICONFROMICOLIB | CMIF_TCHAR;
 	if (!DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ShowStatusMenuItem", 1))
@@ -1714,24 +1729,7 @@ static int ChangeStatusMsgPrebuild(WPARAM wParam, LPARAM lParam)
 	mi.pszService = MS_SIMPLESTATUSMSG_SHOWDIALOGINT;
 	mi.ptszName = LPGENT("Status Message...");
 	mi.position = 2000200000;
-	hGlobalStatusMenuItem = (HANDLE)CallService(MS_CLIST_ADDSTATUSMENUITEM, 0, (LPARAM)&mi);
-
-	StatusMenuItemCount = 0;
-	ProtoEnumAccounts(&count, &pa);
-	hProtoStatusMenuItem = (HANDLE *)mir_realloc(hProtoStatusMenuItem, sizeof(HANDLE) * count);
-	for (i = 0; i < count; ++i)
-	{
-		if (!IsAccountEnabled(pa[i]))
-			continue;
-
-		if (!pa[i]->bIsVisible)
-			continue;
-
-		StatusMenuItemCount++;
-	}
-
-	if (StatusMenuItemCount == 0)
-		return 0;
+	CallService(MS_CLIST_ADDSTATUSMENUITEM, 0, (LPARAM)&mi);
 
 	mi.popupPosition = 500084000;
 	mi.position = 2000040000;
@@ -1739,8 +1737,8 @@ static int ChangeStatusMsgPrebuild(WPARAM wParam, LPARAM lParam)
 	for (i = 0; i < count; ++i)
 	{
 		char szSetting[80];
-		TCHAR buf[256];
-		int flags;
+		TCHAR szBuffer[256];
+		int iProtoFlags;
 
 		if (!IsAccountEnabled(pa[i]))
 			continue;
@@ -1755,15 +1753,15 @@ static int ChangeStatusMsgPrebuild(WPARAM wParam, LPARAM lParam)
 			continue;
 
 		mir_snprintf(szSetting, SIZEOF(szSetting), "Proto%sFlags", pa[i]->szModuleName);
-		flags = DBGetContactSettingByte(NULL, "SimpleStatusMsg", szSetting, PROTO_POPUPDLG);
-		if (flags & PROTO_NO_MSG || flags & PROTO_THIS_MSG)
+		iProtoFlags = DBGetContactSettingByte(NULL, "SimpleStatusMsg", szSetting, PROTO_POPUPDLG);
+		if (iProtoFlags & PROTO_NO_MSG || iProtoFlags & PROTO_THIS_MSG)
 			continue;
 
-		if (DBGetContactSettingByte(NULL, accounts->pa[i]->szModuleName, "LockMainStatus", 0) &&
+		if (DBGetContactSettingByte(NULL, pa[i]->szModuleName, "LockMainStatus", 0) &&
 			CallService(MS_SYSTEM_GETVERSION, 0, 0) >= PLUGIN_MAKE_VERSION(0, 9, 0, 10))
 		{
-			mir_sntprintf(buf, SIZEOF(buf), TranslateT("%s (locked)"), pa[i]->tszAccountName);
-			mi.ptszPopupName = buf;
+			mir_sntprintf(szBuffer, SIZEOF(szBuffer), TranslateT("%s (locked)"), pa[i]->tszAccountName);
+			mi.ptszPopupName = szBuffer;
 		}
 		else mi.ptszPopupName = pa[i]->tszAccountName;
 		hProtoStatusMenuItem[i] = (HANDLE)CallService(MS_CLIST_ADDSTATUSMENUITEM, 0, (LPARAM)&mi);
