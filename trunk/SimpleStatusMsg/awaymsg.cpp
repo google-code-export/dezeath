@@ -34,6 +34,8 @@ static HANDLE hWindowList2;
 
 static char *StrNormNewlineA(char *szStr)
 {
+	if (szStr == NULL) return NULL;
+
 	int nCR = 0;
 	for (int i = 0; szStr[i]; i++)
 		if (szStr[i] != 0x0D && szStr[i + 1] == 0x0A) nCR++;
@@ -54,6 +56,8 @@ static char *StrNormNewlineA(char *szStr)
 
 static TCHAR *StrNormNewline(TCHAR *tszStr)
 {
+	if (tszStr == NULL) return NULL;
+
 	int nCR = 0;
 	for (int i = 0; tszStr[i]; i++)
 		if (tszStr[i] != 0x0D && tszStr[i + 1] == 0x0A) nCR++;
