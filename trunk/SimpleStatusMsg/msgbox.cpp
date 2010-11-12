@@ -825,13 +825,13 @@ void ChangeDlgStatus(HWND hwndDlg, struct MsgBoxData *msgbox_data, int iStatus)
 	if (iStatus == ID_STATUS_CURRENT)
 	{
 		if (msgbox_data->m_bOnStartup)
-			mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("%s Status Message: %s"), szProtoName, TranslateT("<startup>"));
+			mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("%s Message (%s)"), TranslateT("<startup>"), szProtoName);
 		else
-			mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("%s Status Message: %s"), szProtoName, TranslateT("<current>"));
+			mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("%s Message (%s)"), TranslateT("<current>"), szProtoName);
 	}
 	else if (iStatus > ID_STATUS_CURRENT)
 	{
-		TCHAR	buff[128];
+		TCHAR buff[128];
 #ifdef _UNICODE
 		char buff1[128];
 		CallService(MS_SS_GETPROFILENAME, iStatus - 40083, (LPARAM)buff1);
@@ -839,10 +839,10 @@ void ChangeDlgStatus(HWND hwndDlg, struct MsgBoxData *msgbox_data, int iStatus)
 #else
 		CallService(MS_SS_GETPROFILENAME, iStatus - 40083, (LPARAM)buff);
 #endif
-		mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("%s Status Message: %s"), szProtoName, (TCHAR*)buff);
+		mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("%s Message (%s)"), (TCHAR*)buff, szProtoName);
 	}
 	else
-		mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("%s Status Message: %s"), szProtoName, (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, iStatus, GCMDF_TCHAR));
+		mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("%s Message (%s)"), (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, iStatus, GCMDF_TCHAR), szProtoName);
 	SetWindowText(hwndDlg, szTitle);
 
 	if (iStatus == ID_STATUS_CURRENT)
@@ -967,12 +967,12 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 			if (init_data->m_iStatus == ID_STATUS_CURRENT)
 			{
 				if (init_data->m_bOnStartup)
-					mir_sntprintf(szTitle, SIZEOF(szTitle), szFormat, szProtoName, TranslateT("<startup>"));
+					mir_sntprintf(szTitle, SIZEOF(szTitle), szFormat, TranslateT("<startup>"), szProtoName);
 				else
-					mir_sntprintf(szTitle, SIZEOF(szTitle), szFormat, szProtoName, TranslateT("<current>"));
+					mir_sntprintf(szTitle, SIZEOF(szTitle), szFormat, TranslateT("<current>"), szProtoName);
 			}
 			else
-				mir_sntprintf(szTitle, SIZEOF(szTitle), szFormat, szProtoName, (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, init_data->m_iStatus, GCMDF_TCHAR));
+				mir_sntprintf(szTitle, SIZEOF(szTitle), szFormat, (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, init_data->m_iStatus, GCMDF_TCHAR), szProtoName);
 			SetWindowText(hwndDlg, szTitle);
 
 			int icoStatus = ID_STATUS_OFFLINE;
