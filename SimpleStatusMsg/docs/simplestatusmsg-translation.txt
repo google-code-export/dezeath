@@ -1,5 +1,5 @@
 ; This is a template for translation of Simple Status Message plugin
-; Last updated 2010/08/25 for 1.9.0.0
+; Last updated for version 1.9.0.3
 
 ;[OK]
 ;[OK (%d)]
@@ -9,11 +9,10 @@
 ;[<current>]
 ;[<startup>]
 ;[Global]
-;[%s Status Message: %s]
+;[%s Message (%s)]
 ;[%s Message for %s]
 ;[Retrieving %s message...]
 ;[Co&py to Clipboard]
-;[%s Status Message: %s]
 ;[Retrieving status message for %s...]
 ;[Re&ad %s Message]
 ;[Re&ad Away Message]
@@ -123,3 +122,6 @@
 ; Obsolete since 1.9.0.0
 ;[* Your contact list plugin doesn't support this feature. Try another one.]
 ;[* This feature is only available when using StartupStatus.]
+
+; Obsolete since 1.9.0.3
+;[%s Status Message: %s]
