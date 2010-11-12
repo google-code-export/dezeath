@@ -32,6 +32,46 @@ static HANDLE hGoToURLMenuItem;
 static HANDLE hWindowList;
 static HANDLE hWindowList2;
 
+static char *StrNormNewlineA(char *szStr)
+{
+	int nCR = 0;
+	for (int i = 0; szStr[i]; i++)
+		if (szStr[i] != 0x0D && szStr[i + 1] == 0x0A) nCR++;
+
+	if (!nCR) return mir_strdup(szStr);
+
+	char *szNewStr = (char*)mir_alloc(lstrlenA(szStr) + nCR + 1), *pszStr = szNewStr;
+	while (*szStr)
+	{
+		if (*szStr == 0x0A)
+			*pszStr++ = 0x0D;
+		*pszStr++ = *szStr++;
+	}
+	*pszStr++ = 0;
+
+	return szNewStr;
+}
+
+static TCHAR *StrNormNewline(TCHAR *tszStr)
+{
+	int nCR = 0;
+	for (int i = 0; tszStr[i]; i++)
+		if (tszStr[i] != 0x0D && tszStr[i + 1] == 0x0A) nCR++;
+
+	if (!nCR) return mir_tstrdup(tszStr);
+
+	TCHAR *tszNewStr = (TCHAR*)mir_alloc((lstrlen(tszStr) + nCR + 1) * sizeof(TCHAR)), *ptszStr = tszNewStr;
+	while (*tszStr)
+	{
+		if (*tszStr == 0x0A)
+			*ptszStr++ = 0x0D;
+		*ptszStr++ = *tszStr++;
+	}
+	*ptszStr++ = 0;
+
+	return tszNewStr;
+}
+
 struct AwayMsgDlgData
 {
 	HANDLE hContact;
@@ -98,11 +138,18 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 			if (unicode) 
 			{
 				DBGetContactSettingWString(dat->hContact, "CList", "StatusMsg", &dbv);
-				SetDlgItemText(hwndDlg, IDC_MSG, dbv.pwszVal);
+				TCHAR *tszMsg = StrNormNewline(dbv.pwszVal);
+				SetDlgItemText(hwndDlg, IDC_MSG, tszMsg);
+				mir_free(tszMsg);
+				DBFreeVariant(&dbv);
 			}
-			else 
-#endif	
-				SetDlgItemTextA(hwndDlg, IDC_MSG, (const char*)ack->lParam);
+			else
+#endif
+			{
+				char *szMsg = StrNormNewlineA((char *)ack->lParam);
+				SetDlgItemTextA(hwndDlg, IDC_MSG, szMsg);
+				mir_free(szMsg);
+			}
 
 			if (ack->lParam && strlen((char*)ack->lParam)) EnableWindow(GetDlgItem(hwndDlg, IDC_COPY), TRUE);
 			ShowWindow(GetDlgItem(hwndDlg, IDC_RETRIEVING), SW_HIDE);
@@ -223,11 +270,18 @@ static INT_PTR CALLBACK CopyAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 				if (unicode)
 				{
 					DBGetContactSettingWString(dat->hContact, "CList", "StatusMsg", &dbv);
-					mir_sntprintf(msg, SIZEOF(msg), _T("%s"), dbv.ptszVal);
+					TCHAR *tszMsg = StrNormNewline(dbv.pwszVal);
+					mir_sntprintf(msg, SIZEOF(msg), _T("%s"), tszMsg);
+					mir_free(tszMsg);
+					DBFreeVariant(&dbv);
 				}
-				else 
-#endif	
-					mir_sntprintf(msg, SIZEOF(msg), _T("%hs"), ack->lParam);
+				else
+#endif
+				{
+					char *szMsg = StrNormNewlineA((char *)ack->lParam);
+					mir_sntprintf(msg, SIZEOF(msg), _T("%hs"), szMsg);
+					mir_free(szMsg);
+				}
 				len = lstrlen(msg);
 
 				if (len)
@@ -377,7 +431,8 @@ static int AwayMsgPreBuildMenu(WPARAM wParam, LPARAM lParam)
 		{
 			DBGetContactSettingWString((HANDLE)wParam, "CList", "StatusMsg", &dbv);
 			szMsg = mir_u2a(dbv.pwszVal);
-		} else
+		}
+		else
 #endif
 		{
 			DBGetContactSettingString((HANDLE)wParam, "CList", "StatusMsg", &dbv);
