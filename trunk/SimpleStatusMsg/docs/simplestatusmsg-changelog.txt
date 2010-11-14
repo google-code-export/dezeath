@@ -7,6 +7,16 @@ Simple Status Message plugin for Miranda IM Changelog
 
 
 ============================
+v 1.9.0.3 (2010/11/14):
+============================
+* Restored periodic status message updating on ICQ protocol
+* Simplified the status message dialog title
+! Fixed showing and copying multiline status messages without carriage return (CR) characters
+! Fixed showing status menu item when there is only one account enabled
+! Fixed updating variables on idle
+! Fixed memory leak
+
+============================
 v 1.9.0.2 (2010/10/10):
 ============================
 + Added ability to set per-contact status messages (using contact-related variables) for ICQ protocol

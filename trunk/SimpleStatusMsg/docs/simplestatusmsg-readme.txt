@@ -23,8 +23,8 @@ Main features:
 
 Built-in variables list:
   %winampsong% - title of the song currently playing in Winamp (or another player with Winamp API Emulator).
-  %date% - actual date.
-  %time% - actual time.
+  %date% - current date.
+  %time% - current time or the time of becoming idle.
   %rand(x,y)% - random number in a specified range. y must be greater than x and both arguments must be integers.
   %randmsg% - random status message from the history.
   %randdefmsg% - random predefined status message.

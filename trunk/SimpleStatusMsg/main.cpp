@@ -42,7 +42,7 @@ PLUGININFOEX pluginInfo = {
 #else
 	"Simple Status Message",
 #endif
-	PLUGIN_MAKE_VERSION(1, 9, 0, 2),
+	PLUGIN_MAKE_VERSION(1, 9, 0, 3),
 	"Provides a simple way to set status and away messages",
 	"Bartosz 'Dezeath' Bia³ek, Harven",
 	"dezred"/*antispam*/"@"/*antispam*/"gmail"/*antispam*/"."/*antispam*/"com",
