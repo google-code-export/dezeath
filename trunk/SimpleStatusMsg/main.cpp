@@ -709,10 +709,8 @@ static TCHAR *GetAwayMessage(int iStatus, const char *szProto, BOOL bInsertVars,
 #ifdef _DEBUG
 	log2file("GetAwayMessage(): %s has %s status and \"" TCHAR_STR_PARAM "\" status message.", szProto, StatusModeToDbSetting(iStatus, ""), format);
 #endif
-	if (format == NULL)
-		return NULL;
 
-	if (bInsertVars)
+	if (bInsertVars && format != NULL)
 	{
 		TCHAR *tszVarsMsg = InsertVarsIntoMsg(format, szProto, iStatus, hContact); // TODO random values not the same!
 		mir_free(format);
@@ -1821,6 +1819,8 @@ static int OnIdleChanged(WPARAM, LPARAM lParam)
 			TCHAR *tszVarsMsg = InsertVarsIntoMsg(tszMsg, accounts->pa[i]->szModuleName, iStatus, NULL);
 			SaveMessageToDB(accounts->pa[i]->szModuleName, tszMsg, TRUE);
 			SaveMessageToDB(accounts->pa[i]->szModuleName, tszVarsMsg, FALSE);
+			mir_free(tszMsg);
+			mir_free(tszVarsMsg);
 		}
 	}
 
