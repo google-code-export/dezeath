@@ -29,7 +29,13 @@ struct MM_INTERFACE	mmi;
 
 PLUGININFOEX pluginInfo = {
 	sizeof(PLUGININFOEX),
+#if defined(_WIN64)
+	"AddContact+ (x64)",
+#elif defined(_UNICODE)
+	"AddContact+ (Unicode)",
+#else
 	"AddContact+",
+#endif
 	PLUGIN_MAKE_VERSION(0,9,8,6),
 	"Provides the ability to add contacts manually (without searching for them)",
 	"Bartosz 'Dezeath' Bia³ek",
@@ -69,7 +75,7 @@ __declspec(dllexport) const MUUID* MirandaPluginInterfaces(void)
 	return interfaces;
 }
 
-int AddContactPlusDialog(WPARAM wParam,LPARAM lParam)
+INT_PTR AddContactPlusDialog(WPARAM wParam,LPARAM lParam)
 {
 	CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_ADDCONTACT), (HWND)NULL, AddContactDlgProc, 0);
 	return 0;
@@ -146,7 +152,7 @@ static int AccListChanged(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-int InitAwayModule(WPARAM wParam,LPARAM lParam)
+static int InitAwayModule(WPARAM wParam,LPARAM lParam)
 {
 	SKINICONDESC ico = {0};
 	char szFile[MAX_PATH];

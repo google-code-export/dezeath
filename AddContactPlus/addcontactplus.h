@@ -22,31 +22,29 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // this plugin requires Miranda 0.8 or newer
 #define MIRANDA_VER 0x0800
 
-#if defined(UNICODE) && !defined(_UNICODE)
-	#define _UNICODE
-#endif
+#include <m_stdhdr.h>
 
-#include <stdio.h>
 #include <windows.h>
-#include "../../include/win2k.h"
-#include "../../include/newpluginapi.h"
-#include "../../include/m_system.h"
-#include "../../include/m_protocols.h"
-#include "../../include/m_protosvc.h"
-#include "../../include/m_database.h"
-#include "../../include/m_clist.h"
-#include "../../include/m_genmenu.h"
-#include "../../include/m_skin.h"
-#include "../../include/m_icolib.h"
-#include "../../include/m_langpack.h"
-#include "../../include/m_addcontact.h"
-#include "../../include/m_icq.h"
-#include "../../include/m_utils.h"
+#include <newpluginapi.h>
+#include <m_system.h>
+#include <m_protocols.h>
+#include <m_protosvc.h>
+#include <m_database.h>
+#include <m_clist.h>
+#include <m_genmenu.h>
+#include <m_skin.h>
+#include <m_icolib.h>
+#include <m_langpack.h>
+#include <m_addcontact.h>
+#include <m_icq.h>
+#include <m_utils.h>
+#include <win2k.h>
+
 #include "m_toolbar.h"
 #include "m_addcontactplus.h"
 #include "resource.h"
 
 #define	ICON_ADD	"AddContactPlus_Icon"
 
-BOOL CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam);
+INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam);
 extern HINSTANCE	hInst;
