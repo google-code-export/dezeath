@@ -61,7 +61,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	return TRUE;
 }
 
-__declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
+extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
 {
 	if (mirandaVersion < PLUGIN_MAKE_VERSION(0,8,0,0)) {
 		MessageBox(NULL, _T("The AddContact+ plugin cannot be loaded. It requires Miranda IM 0.8 or later."), _T("AddContact+ Plugin"), MB_OK|MB_ICONWARNING|MB_SETFOREGROUND|MB_TOPMOST);
@@ -70,7 +70,7 @@ __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
 	return &pluginInfo;
 }
 
-__declspec(dllexport) const MUUID* MirandaPluginInterfaces(void)
+extern "C" __declspec(dllexport) const MUUID* MirandaPluginInterfaces(void)
 {
 	return interfaces;
 }
@@ -81,7 +81,7 @@ INT_PTR AddContactPlusDialog(WPARAM wParam,LPARAM lParam)
 	return 0;
 }
 
-static int IconsChanged(WPARAM wParam,LPARAM lParam)
+static int OnIconsChanged(WPARAM wParam,LPARAM lParam)
 {
 	CLISTMENUITEM mi = {0};
 
@@ -96,14 +96,15 @@ static int IconsChanged(WPARAM wParam,LPARAM lParam)
 	return 0;
 }
 
-static int AccListChanged(WPARAM wParam, LPARAM lParam)
+static int OnAccListChanged(WPARAM wParam, LPARAM lParam)
 {
 	PROTOACCOUNT **accounts;
-	int proto_count, ProtoCount = 0, i;
+	int proto_count, ProtoCount = 0;
 	DWORD caps;
 
 	ProtoEnumAccounts(&proto_count, &accounts);
-	for (i = 0; i < proto_count; i++) {
+	for (int i = 0; i < proto_count; i++)
+	{
 		if (!IsAccountEnabled(accounts[i])) continue;
 		caps = (DWORD)CallProtoService(accounts[i]->szModuleName, PS_GETCAPS,PFLAGNUM_1, 0);
 		if (!(caps & PF1_BASICSEARCH) && !(caps & PF1_EXTSEARCH) && !(caps & PF1_SEARCHBYEMAIL)	&& !(caps & PF1_SEARCHBYNAME))
@@ -111,7 +112,8 @@ static int AccListChanged(WPARAM wParam, LPARAM lParam)
 		ProtoCount++;
 	}
 
-	if (ProtoCount) {
+	if (ProtoCount)
+	{
 		CLISTMENUITEM mi = {0};
 
 		if (hMainMenuItem)
@@ -125,21 +127,23 @@ static int AccListChanged(WPARAM wParam, LPARAM lParam)
 		mi.pszService = MS_ADDCONTACTPLUS_SHOW;
 		hMainMenuItem = (HANDLE)CallService(MS_CLIST_ADDMAINMENUITEM, 0,(LPARAM)&mi);
 
-		if (ServiceExists(MS_TB_ADDBUTTON)) {
+		if (ServiceExists(MS_TB_ADDBUTTON))
+		{
 			TBButton tbb = {0};
 
 			tbb.cbSize = sizeof(TBButton);
+			tbb.tbbFlags = TBBF_VISIBLE | TBBF_SHOWTOOLTIP;
 			tbb.pszButtonID = "acplus_btn";
 			tbb.pszButtonName = Translate("Add Contact Manually");
 			tbb.pszServiceName = MS_ADDCONTACTPLUS_SHOW;
 			tbb.pszTooltipUp = Translate("Add Contact Manually");
 			tbb.hPrimaryIconHandle = hIconLibItem;
-			tbb.tbbFlags = TBBF_VISIBLE;
 			tbb.defPos = 10100;
 			hToolBarItem = (HANDLE)CallService(MS_TB_ADDBUTTON, 0, (LPARAM)&tbb);
 		}
 	}
-	else {
+	else
+	{
 		if (!hMainMenuItem)
 			return 0;
 
@@ -152,47 +156,44 @@ static int AccListChanged(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-static int InitAwayModule(WPARAM wParam,LPARAM lParam)
+static int OnModulesLoaded(WPARAM wParam,LPARAM lParam)
 {
-	SKINICONDESC ico = {0};
+	SKINICONDESC sid = {0};
 	char szFile[MAX_PATH];
 
 	GetModuleFileNameA(hInst, szFile, MAX_PATH);
+	sid.cbSize = sizeof(SKINICONDESC);
+	sid.flags = SIDF_TCHAR;
+	sid.pszDefaultFile = szFile;
+	sid.ptszSection = _T("AddContact+");
+	sid.iDefaultIndex = -IDI_ADDCONTACT;
+	sid.ptszDescription = LPGENT("Add Contact Manually");
+	sid.pszName = ICON_ADD;
+	hIconLibItem = (HANDLE)CallService(MS_SKIN2_ADDICON, (WPARAM)0, (LPARAM)&sid);
+	hChangedIcons = HookEvent(ME_SKIN2_ICONSCHANGED, OnIconsChanged);
 
-	ico.cbSize = sizeof(ico);
-	ico.flags = SIDF_TCHAR;
-	ico.cx = ico.cy = 16;
-	ico.pszDefaultFile = szFile;
-	ico.ptszSection = LPGENT("AddContact+");
-	ico.iDefaultIndex = -IDI_ADDCONTACT;
-	ico.ptszDescription = LPGENT("Add Contact Manually");
-	ico.pszName = ICON_ADD;
-	hIconLibItem = (HANDLE)CallService(MS_SKIN2_ADDICON, (WPARAM)0, (LPARAM)&ico);
-	hChangedIcons = HookEvent(ME_SKIN2_ICONSCHANGED, IconsChanged);
-
-	AccListChanged(0, 0);
+	OnAccListChanged(0, 0);
 
 	return 0;
 }
 
-int __declspec(dllexport) Load(PLUGINLINK *link)
+extern "C" int __declspec(dllexport) Load(PLUGINLINK *link)
 {
 	pluginLink = link;
 
 	mir_getMMI(&mmi);
-	hModulesLoaded = HookEvent(ME_SYSTEM_MODULESLOADED, InitAwayModule);
-	hAccListChanged = HookEvent(ME_PROTO_ACCLISTCHANGED, AccListChanged);
+	hModulesLoaded = HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
+	hAccListChanged = HookEvent(ME_PROTO_ACCLISTCHANGED, OnAccListChanged);
 	hService = CreateServiceFunction(MS_ADDCONTACTPLUS_SHOW, AddContactPlusDialog);
 
 	return 0;
 }
 
-int __declspec(dllexport) Unload(void)
+extern "C" int __declspec(dllexport) Unload(void)
 {
 	UnhookEvent(hModulesLoaded);
 	UnhookEvent(hChangedIcons);
 	UnhookEvent(hAccListChanged);
-
 	DestroyServiceFunction(hService);
 
 	return 0;

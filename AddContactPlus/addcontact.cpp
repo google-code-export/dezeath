@@ -81,8 +81,8 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 		TranslateDialogDefault(hdlg);
 		HookEventMessage(ME_SKIN2_ICONSCHANGED, hdlg, DM_ADDCONTACT_CHANGEICONS);
 		HookEventMessage(ME_PROTO_ACCLISTCHANGED, hdlg, DM_ADDCONTACT_CHANGEACCLIST);
-		SendMessage(hdlg, WM_SETICON, ICON_BIG, (LPARAM)CallService(MS_SKIN2_GETICON, (WPARAM)0, (LPARAM)ICON_ADD));
-		SetWindowText(hdlg, TranslateT("Add Contact Manually"));
+		SendMessage(hdlg, WM_SETICON, ICON_BIG, (LPARAM)CallService(MS_SKIN2_GETICON, 0, (LPARAM)ICON_ADD));
+		SendMessage(hdlg, WM_SETICON, ICON_SMALL, (LPARAM)CallService(MS_SKIN2_GETICON, 0, (LPARAM)ICON_ADD));
 		
 		{
 			int groupId;
@@ -465,8 +465,8 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 		break;
 
 	case DM_ADDCONTACT_CHANGEICONS:
-		CallService(MS_SKIN2_RELEASEICON, (WPARAM)SendMessage(hdlg, WM_SETICON, ICON_BIG, (LPARAM)NULL), (LPARAM)0);
-		SendMessage(hdlg, WM_SETICON, ICON_BIG, (LPARAM)CallService(MS_SKIN2_GETICON, (WPARAM)0, (LPARAM)ICON_ADD));
+		CallService(MS_SKIN2_RELEASEICON, (WPARAM)SendMessage(hdlg, WM_SETICON, ICON_BIG, (LPARAM)CallService(MS_SKIN2_GETICON, 0, (LPARAM)ICON_ADD)), 0);
+		CallService(MS_SKIN2_RELEASEICON, (WPARAM)SendMessage(hdlg, WM_SETICON, ICON_SMALL, (LPARAM)CallService(MS_SKIN2_GETICON, 0, (LPARAM)ICON_ADD)), 0);
 		break;
 
 	case DM_ADDCONTACT_CHANGEACCLIST:
@@ -505,7 +505,8 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 		break;
 
 	case WM_DESTROY:
-		CallService(MS_SKIN2_RELEASEICON, (WPARAM)SendMessage(hdlg, WM_SETICON, ICON_BIG, (LPARAM)NULL), (LPARAM)0);
+		CallService(MS_SKIN2_RELEASEICON, (WPARAM)SendMessage(hdlg, WM_SETICON, ICON_BIG, (LPARAM)NULL), 0);
+		CallService(MS_SKIN2_RELEASEICON, (WPARAM)SendMessage(hdlg, WM_SETICON, ICON_SMALL, (LPARAM)NULL), 0);
 		acs = ( ADDCONTACTSTRUCT* )GetWindowLongPtr(hdlg,GWLP_USERDATA);
 		if (acs) {
 			if (acs->psr) {
