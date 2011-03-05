@@ -23,9 +23,9 @@
 //
 // -----------------------------------------------------------------------------
 //
-// File name      : $URL: https://miranda.googlecode.com/svn/branches/stable/miranda/protocols/IcqOscarJ/icq_constants.h $
-// Revision       : $Revision: 12743 $
-// Last change on : $Date: 2010-09-19 06:41:20 +0200 (N, 19 wrz 2010) $
+// File name      : $URL: https://miranda.googlecode.com/svn/trunk/miranda/protocols/IcqOscarJ/icq_constants.h $
+// Revision       : $Revision: 13304 $
+// Last change on : $Date: 2011-01-21 01:53:22 +0100 (Pt, 21 sty 2011) $
 // Last change by : $Author: borkra $
 //
 // DESCRIPTION:
@@ -60,7 +60,7 @@
 #define DEFAULT_SERVER_PORT         5190
 #define DEFAULT_SERVER_PORT_SSL     443
 #define DEFAULT_SERVER_HOST         "login.icq.com"
-#define DEFAULT_SERVER_HOST_SSL     "slogin.oscar.aol.com"
+#define DEFAULT_SERVER_HOST_SSL     "slogin.icq.com"
 #define DEFAULT_SS_ENABLED          1
 #define DEFAULT_SS_ADDSERVER        1
 #define DEFAULT_SS_LOAD             0
@@ -68,7 +68,7 @@
 #define DEFAULT_SS_GROUP            "General"
 
 #define DEFAULT_SECURE_LOGIN        1
-#define DEFAULT_SECURE_CONNECTION   0
+#define DEFAULT_SECURE_CONNECTION   1
 #define DEFAULT_KEEPALIVE_ENABLED   1
 #define DEFAULT_AIM_ENABLED         1
 #define DEFAULT_UTF_ENABLED         2 // everything unicode is default
@@ -178,7 +178,6 @@
 
 // Ascii Capability IDs
 #define CAP_RTFMSGS                 "{97B12751-243C-4334-AD22-D6ABF73F1492}"
-#define CAP_HTMLMSGS                "{0138CA7B-769A-4915-88F2-13FC00979EA8}"
 #define CAP_UTF8MSGS                "{0946134E-4C7F-11D1-8222-444553540000}"
 
 // Binary Capability Sizes
@@ -189,7 +188,6 @@
 #define CAP_SRV_RELAY               0x09, 0x46, 0x13, 0x49, 0x4c, 0x7f, 0x11, 0xd1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00
 #define CAP_UTF                     0x09, 0x46, 0x13, 0x4e, 0x4c, 0x7f, 0x11, 0xd1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00
 #define CAP_RTF                     0x97, 0xb1, 0x27, 0x51, 0x24, 0x3c, 0x43, 0x34, 0xad, 0x22, 0xd6, 0xab, 0xf7, 0x3f, 0x14, 0x92
-#define CAP_HTML                    0x01, 0x38, 0xca, 0x7b, 0x76, 0x9a, 0x49, 0x15, 0x88, 0xf2, 0x13, 0xfc, 0x00, 0x97, 0x9e, 0xa8
 #define CAP_CONTACTS                0x09, 0x46, 0x13, 0x4b, 0x4c, 0x7f, 0x11, 0xd1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00
 #define CAP_TYPING                  0x56, 0x3f, 0xc8, 0x09, 0x0b, 0x6f, 0x41, 0xbd, 0x9f, 0x79, 0x42, 0x26, 0x09, 0xdf, 0xa2, 0xf3
 #define CAP_ICQDIRECT               0x09, 0x46, 0x13, 0x44, 0x4c, 0x7f, 0x11, 0xd1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00
@@ -200,7 +198,6 @@
 #define CAPF_SRV_RELAY              0x00000001
 #define CAPF_UTF                    0x00000002
 #define CAPF_RTF                    0x00000004
-#define CAPF_HTML                   0x00000008
 #define CAPF_CONTACTS               0x00000010
 #define CAPF_TYPING                 0x00000020
 #define CAPF_ICQDIRECT              0x00000080
@@ -640,17 +637,17 @@
 #define CLIENT_MD5_STRING           "AOL Instant Messenger (SM)"
 #define UNIQUEIDSETTING             "UIN"
 #define UINMAXLEN                   11 // DWORD string max len + 1
-#define PASSWORDMAXLEN              16
-#define OSCAR_PROXY_HOST            "ars.oscar.aol.com"
+#define PASSWORDMAXLEN              128
+#define OSCAR_PROXY_HOST            "ars.icq.com"
 #define OSCAR_PROXY_VERSION         0x044A
 
 #define CLIENT_ID_STRING            "ICQ Client"  // Client identification, mimic ICQ 6.5
 #define CLIENT_ID_CODE              0x010a
-#define CLIENT_VERSION_MAJOR        0x0006
-#define CLIENT_VERSION_MINOR        0x0005
+#define CLIENT_VERSION_MAJOR        0x0014
+#define CLIENT_VERSION_MINOR        0x0034
 #define CLIENT_VERSION_LESSER       0x0000
-#define CLIENT_VERSION_BUILD        0x07e8
-#define CLIENT_DISTRIBUTION         0x00007537
+#define CLIENT_VERSION_BUILD        0x0c18
+#define CLIENT_DISTRIBUTION         0x00000611
 #define CLIENT_LANGUAGE             "en"
 #define CLIENT_COUNTRY              "us"
 
