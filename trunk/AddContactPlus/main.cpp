@@ -2,7 +2,7 @@
 
 AddContact+ plugin for Miranda IM
 
-Copyright © 2007-2010 Bartosz 'Dezeath' Bia³ek
+Copyright © 2007-2011 Bartosz 'Dezeath' Bia³ek
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -36,11 +36,11 @@ PLUGININFOEX pluginInfo = {
 #else
 	"AddContact+",
 #endif
-	PLUGIN_MAKE_VERSION(0,9,8,6),
+	PLUGIN_MAKE_VERSION(0, 9, 8, 6),
 	"Provides the ability to add contacts manually (without searching for them)",
 	"Bartosz 'Dezeath' Bia³ek",
 	"dezred"/*antispam*/"@"/*antispam*/"gmail"/*antispam*/"."/*antispam*/"com",
-	"© 2007-2010 Bartosz 'Dezeath' Bia³ek",
+	"© 2007-2011 Bartosz 'Dezeath' Bia³ek",
 	"http://code.google.com/p/dezeath",
 	UNICODE_AWARE,
 	0,
