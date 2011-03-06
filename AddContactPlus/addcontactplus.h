@@ -2,7 +2,7 @@
 
 AddContact+ plugin for Miranda IM
 
-Copyright © 2007-2010 Bartosz 'Dezeath' Bia³ek
+Copyright © 2007-2011 Bartosz 'Dezeath' Bia³ek
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -19,8 +19,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-// this plugin requires Miranda 0.8 or newer
-#define MIRANDA_VER 0x0800
+// to enable all 0.9.0 core functions
+#define MIRANDA_VER 0x0900
 
 #include <m_stdhdr.h>
 
@@ -36,7 +36,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_icolib.h>
 #include <m_langpack.h>
 #include <m_addcontact.h>
-#include <m_icq.h>
 #include <m_utils.h>
 #include <win2k.h>
 
@@ -47,4 +46,4 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	ICON_ADD	"AddContactPlus_Icon"
 
 INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam);
-extern HINSTANCE	hInst;
+extern HINSTANCE hInst;
