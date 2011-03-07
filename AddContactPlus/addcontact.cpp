@@ -26,6 +26,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "addcontactplus.h"
 #include <limits.h>
 
+// Function from miranda\src\modules\utils\utils.cpp
+TCHAR* __fastcall rtrim(TCHAR *str)
+{
+	if (str == NULL) return NULL;
+	TCHAR* p = _tcschr(str, 0);
+	while (--p >= str)
+	{
+		switch (*p)
+		{
+		case ' ': case '\t': case '\n': case '\r':
+			*p = 0; break;
+		default:
+			return str;
+		}
+	}
+	return str;
+}
+
 typedef struct				// mNetSend protocol
 {
 	PROTOSEARCHRESULT hdr;
@@ -214,15 +232,13 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 					TCHAR szUserId[256];
 					GetDlgItemText(hdlg, IDC_USERID, szUserId, SIZEOF(szUserId));
 
-					if (strstr(acs->szProto, "GG")) // Gadu-Gadu protocol
+					if (*rtrim(szUserId) == 0 ||
+						(strstr(acs->szProto, "GG") && _tcstoul(szUserId, NULL, 10) > INT_MAX)) // Gadu-Gadu protocol
 					{
-						if (_tcstoul(szUserId, NULL, 10) > INT_MAX)
-						{
-							MessageBox( NULL,
-								TranslateT("The contact cannot be added to your contact list. Make sure the User ID is entered properly."),
-								TranslateT("Add Contact"), MB_OK | MB_ICONWARNING | MB_SETFOREGROUND | MB_TOPMOST);
-							break;
-						}
+						MessageBox( NULL,
+							TranslateT("The contact cannot be added to your contact list. Make sure the User ID is entered properly."),
+							TranslateT("Add Contact"), MB_OK | MB_ICONWARNING | MB_SETFOREGROUND | MB_TOPMOST);
+						break;
 					}
 
 					if (strstr(acs->szProto, "MNETSEND")) // mNetSend protocol
