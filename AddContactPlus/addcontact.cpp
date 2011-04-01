@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <limits.h>
 
 // Function from miranda\src\modules\utils\utils.cpp
-TCHAR* __fastcall rtrim(TCHAR *str)
+TCHAR* __fastcall rtrim(TCHAR* str)
 {
 	if (str == NULL) return NULL;
 	TCHAR* p = _tcschr(str, 0);
@@ -62,7 +62,7 @@ typedef struct				// Tlen protocol
 	char jid[256];
 } TLEN_SEARCH_RESULT;
 
-void AddContactDlgOpts(HWND hdlg, const char *szProto)
+void AddContactDlgOpts(HWND hdlg, const char* szProto)
 {
 	// By default check both checkboxes
 	CheckDlgButton(hdlg, IDC_ADDED, BST_CHECKED);
@@ -78,7 +78,7 @@ void AddContactDlgOpts(HWND hdlg, const char *szProto)
 	flags = (szProto) ? CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_1, 0) : 0;
 /*	if (flags & PF1_BASICSEARCH)
 	{
-		char *szUniqueId = (char*)CallProtoService(szProto, PS_GETCAPS, PFLAG_UNIQUEIDTEXT, 0);
+		char* szUniqueId = (char*)CallProtoService(szProto, PS_GETCAPS, PFLAG_UNIQUEIDTEXT, 0);
 		if (szUniqueId)
 		{
 //			if (szUniqueId[strlen(szUniqueId)-1] != ':')
@@ -113,6 +113,41 @@ void AddContactDlgOpts(HWND hdlg, const char *szProto)
 	}
 }
 
+void AddContactDlgAccounts(HWND hdlg, ADDCONTACTSTRUCT* acs)
+{
+		PROTOACCOUNT** pAccounts;
+		int iRealAccCount, iAccCount = 0, iId, i;
+		DWORD dwCaps;
+
+		SendDlgItemMessage(hdlg, IDC_PROTO, CB_RESETCONTENT, 0, 0);
+		ProtoEnumAccounts(&iRealAccCount, &pAccounts);
+		for (i = 0; i < iRealAccCount; i++)
+		{
+			if (!IsAccountEnabled(pAccounts[i])) continue;
+			dwCaps = (DWORD)CallProtoService(pAccounts[i]->szModuleName, PS_GETCAPS,PFLAGNUM_1, 0);
+			if (!(dwCaps & PF1_BASICSEARCH) && !(dwCaps & PF1_EXTSEARCH) && !(dwCaps & PF1_SEARCHBYEMAIL) && !(dwCaps & PF1_SEARCHBYNAME))
+				continue;
+
+			iAccCount++;
+			iId = SendDlgItemMessage(hdlg, IDC_PROTO, CB_ADDSTRING, 0, (LPARAM)pAccounts[i]->tszAccountName);
+			SendDlgItemMessage(hdlg, IDC_PROTO, CB_SETITEMDATA, (WPARAM)iId, (LPARAM)i);
+		}
+
+		if (iAccCount == 0)
+		{
+			if (GetParent(hdlg) == NULL)
+				DestroyWindow(hdlg);
+			else
+				EndDialog(hdlg, 0);
+			return;
+		}
+		SendDlgItemMessage(hdlg, IDC_PROTO, CB_SETCURSEL, 0, 0);
+		SendMessage(hdlg, WM_COMMAND, MAKEWPARAM(IDC_PROTO, CBN_SELCHANGE), (LPARAM)GetDlgItem(hdlg, IDC_PROTO));
+
+		iId = SendMessage(GetDlgItem(hdlg, IDC_PROTO), CB_GETITEMDATA, (WPARAM)SendMessage(GetDlgItem(hdlg, IDC_PROTO), CB_GETCURSEL, 0, 0), 0);
+		acs->szProto = pAccounts[iId]->szModuleName;
+}
+
 #define DM_ADDCONTACT_CHANGEICONS WM_USER + 11
 #define DM_ADDCONTACT_CHANGEACCLIST WM_USER + 12
 
@@ -122,10 +157,8 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 	switch (msg)
 	{
 		case WM_INITDIALOG:
-			acs = (ADDCONTACTSTRUCT*)mir_alloc(sizeof(ADDCONTACTSTRUCT));
+			acs = (ADDCONTACTSTRUCT*)mir_calloc(sizeof(ADDCONTACTSTRUCT));
 			acs->handleType = HANDLE_SEARCHRESULT;
-			acs->handle = NULL;
-			acs->psr = NULL;
 			SetWindowLongPtr(hdlg, GWLP_USERDATA, (LONG_PTR)acs);
 
 			TranslateDialogDefault(hdlg);
@@ -147,38 +180,16 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 					DBFreeVariant(&dbv);
 				}
 			}
-
 			SendDlgItemMessage(hdlg, IDC_GROUP, CB_INSERTSTRING, 0, (LPARAM)TranslateT("None"));
 			SendDlgItemMessage(hdlg, IDC_GROUP, CB_SETCURSEL, 0, 0);
-			{
-				PROTOACCOUNT** accounts;
-				int proto_count, id, i;
-				DWORD caps;
 
-				ProtoEnumAccounts(&proto_count, &accounts);
-				for (i = 0; i < proto_count; i++)
-				{
-					if (!IsAccountEnabled(accounts[i])) continue;
-					caps = (DWORD)CallProtoService(accounts[i]->szModuleName, PS_GETCAPS, PFLAGNUM_1,0);
-					if (!(caps & PF1_BASICSEARCH) && !(caps & PF1_EXTSEARCH) && !(caps & PF1_SEARCHBYEMAIL) && !(caps & PF1_SEARCHBYNAME))
-						continue;
-
-					id = SendDlgItemMessage(hdlg, IDC_PROTO, CB_ADDSTRING, 0, (LPARAM)accounts[i]->tszAccountName);
-					SendDlgItemMessage(hdlg, IDC_PROTO, CB_SETITEMDATA, (WPARAM)id, (LPARAM)i);
-				}
-				SendDlgItemMessage(hdlg, IDC_PROTO, CB_SETCURSEL, 0, 0);
-				SendMessage(hdlg, WM_COMMAND, MAKEWPARAM(IDC_PROTO, CBN_SELCHANGE), (LPARAM)GetDlgItem(hdlg, IDC_PROTO));
-
-				i = SendMessage(GetDlgItem(hdlg, IDC_PROTO), CB_GETITEMDATA, (WPARAM)SendMessage(GetDlgItem(hdlg, IDC_PROTO), CB_GETCURSEL, 0, 0), 0);
-				acs->szProto = accounts[i]->szModuleName;
-			}
-
+			AddContactDlgAccounts(hdlg, acs);
 			AddContactDlgOpts(hdlg, acs->szProto);
 			EnableWindow(GetDlgItem(hdlg, IDOK), FALSE);
 			break;
 
 		case WM_COMMAND:
-			acs = (ADDCONTACTSTRUCT *)GetWindowLongPtr(hdlg, GWLP_USERDATA);
+			acs = (ADDCONTACTSTRUCT*)GetWindowLongPtr(hdlg, GWLP_USERDATA);
 			switch (LOWORD(wparam))
 			{
 				case IDC_USERID:
@@ -198,11 +209,11 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 				case IDC_PROTO:
 					if (HIWORD(wparam) == CBN_SELCHANGE || HIWORD(wparam) == CBN_SELENDOK)
 					{
-						PROTOACCOUNT **accounts;
-						int proto_count, i;
-						ProtoEnumAccounts(&proto_count, &accounts);
+						PROTOACCOUNT** pAccounts;
+						int iAccCount, i;
+						ProtoEnumAccounts(&iAccCount, &pAccounts);
 						i = SendMessage(GetDlgItem(hdlg, IDC_PROTO), CB_GETITEMDATA, (WPARAM)SendMessage(GetDlgItem(hdlg, IDC_PROTO), CB_GETCURSEL, 0, 0), 0);
-						acs->szProto = accounts[i]->szModuleName;
+						acs->szProto = pAccounts[i]->szModuleName;
 						// TODO remember last setting for each proto?
 						AddContactDlgOpts(hdlg, acs->szProto);
 					}
@@ -235,7 +246,7 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 					if (*rtrim(szUserId) == 0 ||
 						(strstr(acs->szProto, "GG") && _tcstoul(szUserId, NULL, 10) > INT_MAX)) // Gadu-Gadu protocol
 					{
-						MessageBox( NULL,
+						MessageBox(NULL,
 							TranslateT("The contact cannot be added to your contact list. Make sure the User ID is entered properly."),
 							TranslateT("Add Contact"), MB_OK | MB_ICONWARNING | MB_SETFOREGROUND | MB_TOPMOST);
 						break;
@@ -263,7 +274,7 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 					{
 						if (_tcschr(szUserId, '@') == NULL)
 						{
-							MessageBox( NULL,
+							MessageBox(NULL,
 								TranslateT("The contact cannot be added to your contact list. Make sure the User ID is entered properly."),
 								TranslateT("Add Contact"), MB_OK | MB_ICONWARNING | MB_SETFOREGROUND | MB_TOPMOST);
 							break;
@@ -346,38 +357,8 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 
 		case DM_ADDCONTACT_CHANGEACCLIST:
 		{
-			PROTOACCOUNT** accounts;
-			int proto_count, ProtoCount = 0, id, i;
-			DWORD caps;
-
 			acs = (ADDCONTACTSTRUCT*)GetWindowLongPtr(hdlg, GWLP_USERDATA);
-			SendDlgItemMessage(hdlg, IDC_PROTO, CB_RESETCONTENT, 0, 0);
-			ProtoEnumAccounts(&proto_count, &accounts);
-			for (i = 0; i < proto_count; i++)
-			{
-				if (!IsAccountEnabled(accounts[i])) continue;
-				caps = (DWORD)CallProtoService(accounts[i]->szModuleName, PS_GETCAPS,PFLAGNUM_1, 0);
-				if (!(caps & PF1_BASICSEARCH) && !(caps & PF1_EXTSEARCH) && !(caps & PF1_SEARCHBYEMAIL) && !(caps & PF1_SEARCHBYNAME))
-					continue;
-
-				ProtoCount++;
-				id = SendDlgItemMessage(hdlg, IDC_PROTO, CB_ADDSTRING, 0, (LPARAM)accounts[i]->tszAccountName);
-				SendDlgItemMessage(hdlg, IDC_PROTO, CB_SETITEMDATA, (WPARAM)id, (LPARAM)i);
-			}
-
-			if (!ProtoCount)
-			{
-				if (GetParent(hdlg) == NULL)
-					DestroyWindow(hdlg);
-				else
-					EndDialog( hdlg, 0 );
-				break;
-			}
-			SendDlgItemMessage(hdlg, IDC_PROTO, CB_SETCURSEL, 0, 0);
-			SendMessage(hdlg, WM_COMMAND, MAKEWPARAM(IDC_PROTO, CBN_SELCHANGE), (LPARAM)GetDlgItem(hdlg, IDC_PROTO));
-
-			i = SendMessage(GetDlgItem(hdlg, IDC_PROTO), CB_GETITEMDATA, (WPARAM)SendMessage(GetDlgItem(hdlg, IDC_PROTO), CB_GETCURSEL, 0, 0), 0);
-			acs->szProto = accounts[i]->szModuleName;
+			AddContactDlgAccounts(hdlg, acs);
 			break;
 		}
 
