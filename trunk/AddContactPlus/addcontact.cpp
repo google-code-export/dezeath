@@ -244,7 +244,8 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 					GetDlgItemText(hdlg, IDC_USERID, szUserId, SIZEOF(szUserId));
 
 					if (*rtrim(szUserId) == 0 ||
-						(strstr(acs->szProto, "GG") && _tcstoul(szUserId, NULL, 10) > INT_MAX)) // Gadu-Gadu protocol
+						(strstr(acs->szProto, "GG") && _tcstoul(szUserId, NULL, 10) > INT_MAX) || // Gadu-Gadu protocol
+						((CallProtoService(acs->szProto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_NUMERICUSERID) && !_tcstoul(szUserId, NULL, 10)))
 					{
 						MessageBox(NULL,
 							TranslateT("The contact cannot be added to your contact list. Make sure the User ID is entered properly."),
