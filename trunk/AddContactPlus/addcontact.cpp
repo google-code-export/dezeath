@@ -190,6 +190,7 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 			acs->handleType = HANDLE_SEARCHRESULT;
 			SetWindowLongPtr(hdlg, GWLP_USERDATA, (LONG_PTR)acs);
 
+			Utils_RestoreWindowPositionNoSize(hdlg, NULL, "AddContact", "");
 			TranslateDialogDefault(hdlg);
 			HookEventMessage(ME_SKIN2_ICONSCHANGED, hdlg, DM_ADDCONTACT_CHANGEICONS);
 			HookEventMessage(ME_PROTO_ACCLISTCHANGED, hdlg, DM_ADDCONTACT_CHANGEACCLIST);
@@ -405,6 +406,7 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 				}
 				mir_free(acs);
 			}
+			Utils_SaveWindowPosition(hdlg, NULL, "AddContact", "");
 			break;
 	}
 
