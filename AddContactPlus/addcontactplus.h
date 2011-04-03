@@ -25,25 +25,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_stdhdr.h>
 
 #include <windows.h>
+#include <commctrl.h>
+#include <win2k.h>
 #include <newpluginapi.h>
 #include <m_system.h>
-#include <m_protocols.h>
-#include <m_protosvc.h>
-#include <m_database.h>
 #include <m_clist.h>
+#include <m_database.h>
 #include <m_genmenu.h>
-#include <m_skin.h>
 #include <m_icolib.h>
 #include <m_langpack.h>
-#include <m_addcontact.h>
+#include <m_protocols.h>
+#include <m_protosvc.h>
+#include <m_skin.h>
 #include <m_utils.h>
-#include <win2k.h>
+#include <m_addcontact.h>
 
 #include "m_toolbar.h"
 #include "m_addcontactplus.h"
 #include "resource.h"
 
-#define	ICON_ADD	"AddContactPlus_Icon"
+#define	ICON_ADD "AddContactPlus_Icon"
 
 INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam);
 extern HINSTANCE hInst;
