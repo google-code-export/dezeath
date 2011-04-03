@@ -75,13 +75,13 @@ extern "C" __declspec(dllexport) const MUUID* MirandaPluginInterfaces(void)
 	return interfaces;
 }
 
-INT_PTR AddContactPlusDialog(WPARAM wParam,LPARAM lParam)
+INT_PTR AddContactPlusDialog(WPARAM, LPARAM)
 {
 	CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_ADDCONTACT), (HWND)NULL, AddContactDlgProc, 0);
 	return 0;
 }
 
-static int OnIconsChanged(WPARAM wParam,LPARAM lParam)
+static int OnIconsChanged(WPARAM, LPARAM)
 {
 	CLISTMENUITEM mi = {0};
 
@@ -96,7 +96,7 @@ static int OnIconsChanged(WPARAM wParam,LPARAM lParam)
 	return 0;
 }
 
-static int OnAccListChanged(WPARAM wParam, LPARAM lParam)
+static int OnAccListChanged(WPARAM, LPARAM)
 {
 	PROTOACCOUNT** accounts;
 	int proto_count, ProtoCount = 0;
@@ -156,11 +156,10 @@ static int OnAccListChanged(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-static int OnModulesLoaded(WPARAM wParam,LPARAM lParam)
+static int OnModulesLoaded(WPARAM, LPARAM)
 {
 	SKINICONDESC sid = {0};
 	char szFile[MAX_PATH];
-
 	GetModuleFileNameA(hInst, szFile, MAX_PATH);
 	sid.cbSize = sizeof(SKINICONDESC);
 	sid.flags = SIDF_TCHAR;
@@ -171,6 +170,16 @@ static int OnModulesLoaded(WPARAM wParam,LPARAM lParam)
 	sid.pszName = ICON_ADD;
 	hIconLibItem = (HANDLE)CallService(MS_SKIN2_ADDICON, (WPARAM)0, (LPARAM)&sid);
 	hChangedIcons = HookEvent(ME_SKIN2_ICONSCHANGED, OnIconsChanged);
+
+	HOTKEYDESC hkd = {0};
+	hkd.cbSize = sizeof(hkd);
+	hkd.dwFlags = HKD_TCHAR;
+	hkd.pszName = "AddContactPlus_OpenDialog";
+	hkd.ptszDescription = _T("Open Add Contact Dialog");
+	hkd.ptszSection = _T("Main");
+	hkd.pszService = MS_ADDCONTACTPLUS_SHOW;
+	hkd.DefHotKey = HOTKEYCODE(HOTKEYF_CONTROL | HOTKEYF_SHIFT, 'D') | HKF_MIRANDA_LOCAL;
+	CallService(MS_HOTKEY_REGISTER, 0, (LPARAM)&hkd);
 
 	OnAccListChanged(0, 0);
 
