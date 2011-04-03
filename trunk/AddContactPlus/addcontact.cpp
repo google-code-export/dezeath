@@ -116,21 +116,16 @@ void AddContactDlgOpts(HWND hdlg, const char* szProto)
 void AddContactDlgAccounts(HWND hdlg, ADDCONTACTSTRUCT* acs)
 {
 		PROTOACCOUNT** pAccounts;
-		int iRealAccCount, iAccCount = 0, iId, i;
+		int iRealAccCount, iAccCount = 0, i;
 		DWORD dwCaps;
 
-		SendDlgItemMessage(hdlg, IDC_PROTO, CB_RESETCONTENT, 0, 0);
 		ProtoEnumAccounts(&iRealAccCount, &pAccounts);
 		for (i = 0; i < iRealAccCount; i++)
 		{
 			if (!IsAccountEnabled(pAccounts[i])) continue;
 			dwCaps = (DWORD)CallProtoService(pAccounts[i]->szModuleName, PS_GETCAPS,PFLAGNUM_1, 0);
-			if (!(dwCaps & PF1_BASICSEARCH) && !(dwCaps & PF1_EXTSEARCH) && !(dwCaps & PF1_SEARCHBYEMAIL) && !(dwCaps & PF1_SEARCHBYNAME))
-				continue;
-
-			iAccCount++;
-			iId = SendDlgItemMessage(hdlg, IDC_PROTO, CB_ADDSTRING, 0, (LPARAM)pAccounts[i]->tszAccountName);
-			SendDlgItemMessage(hdlg, IDC_PROTO, CB_SETITEMDATA, (WPARAM)iId, (LPARAM)i);
+			if (dwCaps & PF1_BASICSEARCH || dwCaps & PF1_EXTSEARCH || dwCaps & PF1_SEARCHBYEMAIL || dwCaps & PF1_SEARCHBYNAME)
+				iAccCount++;
 		}
 
 		if (iAccCount == 0)
@@ -141,11 +136,45 @@ void AddContactDlgAccounts(HWND hdlg, ADDCONTACTSTRUCT* acs)
 				EndDialog(hdlg, 0);
 			return;
 		}
-		SendDlgItemMessage(hdlg, IDC_PROTO, CB_SETCURSEL, 0, 0);
-		SendMessage(hdlg, WM_COMMAND, MAKEWPARAM(IDC_PROTO, CBN_SELCHANGE), (LPARAM)GetDlgItem(hdlg, IDC_PROTO));
 
-		iId = SendMessage(GetDlgItem(hdlg, IDC_PROTO), CB_GETITEMDATA, (WPARAM)SendMessage(GetDlgItem(hdlg, IDC_PROTO), CB_GETCURSEL, 0, 0), 0);
-		acs->szProto = pAccounts[iId]->szModuleName;
+		HICON hIcon;
+		SIZE textSize;
+		RECT rc;
+		int iIndex = 0, cbWidth = 0;
+
+		HIMAGELIST hIml = ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), (IsWinVerXPPlus() ? ILC_COLOR32 : ILC_COLOR16) | ILC_MASK, iAccCount + 1, 0);
+		ImageList_Destroy((HIMAGELIST)SendDlgItemMessage(hdlg, IDC_PROTO, CBEM_SETIMAGELIST, 0, (LPARAM)hIml));
+		SendDlgItemMessage(hdlg, IDC_PROTO, CB_RESETCONTENT, 0, 0);
+
+		COMBOBOXEXITEM cbei = {0};
+		cbei.mask = CBEIF_IMAGE | CBEIF_SELECTEDIMAGE | CBEIF_TEXT | CBEIF_LPARAM;
+		HDC hdc = GetDC(hdlg);
+		SelectObject(hdc, (HFONT)SendDlgItemMessage(hdlg, IDC_PROTO, WM_GETFONT, 0, 0));
+		for (i = 0; i < iRealAccCount; i++)
+		{
+			if (!IsAccountEnabled(pAccounts[i])) continue;
+			dwCaps = (DWORD)CallProtoService(pAccounts[i]->szModuleName, PS_GETCAPS,PFLAGNUM_1, 0);
+			if (!(dwCaps & PF1_BASICSEARCH) && !(dwCaps & PF1_EXTSEARCH) && !(dwCaps & PF1_SEARCHBYEMAIL) && !(dwCaps & PF1_SEARCHBYNAME))
+				continue;
+
+			cbei.pszText = pAccounts[i]->tszAccountName;
+			GetTextExtentPoint32(hdc, cbei.pszText, lstrlen(cbei.pszText), &textSize);
+			if (textSize.cx > cbWidth) cbWidth = textSize.cx;
+			hIcon = (HICON)CallProtoService(pAccounts[i]->szModuleName, PS_LOADICON, PLI_PROTOCOL | PLIF_SMALL, 0);
+			cbei.iImage = cbei.iSelectedImage = ImageList_AddIcon(hIml, hIcon);
+			DestroyIcon(hIcon);
+			cbei.lParam = (LPARAM)pAccounts[i]->szModuleName;
+			SendDlgItemMessage(hdlg, IDC_PROTO, CBEM_INSERTITEM, 0, (LPARAM)&cbei); 
+			if (acs->szProto && cbei.lParam && !strcmp(acs->szProto, pAccounts[i]->szModuleName))
+				iIndex = cbei.iItem;
+			cbei.iItem++;
+		}
+		cbWidth += 32;
+		SendDlgItemMessage(hdlg, IDC_PROTO, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM)&rc);
+		if ((rc.right - rc.left) < cbWidth)
+			SendDlgItemMessage(hdlg, IDC_PROTO, CB_SETDROPPEDWIDTH, cbWidth, 0);
+		SendDlgItemMessage(hdlg, IDC_PROTO, CB_SETCURSEL, iIndex, 0);
+		SendMessage(hdlg, WM_COMMAND, MAKEWPARAM(IDC_PROTO, CBN_SELCHANGE), (LPARAM)GetDlgItem(hdlg, IDC_PROTO));
 }
 
 #define DM_ADDCONTACT_CHANGEICONS WM_USER + 11
@@ -209,11 +238,7 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 				case IDC_PROTO:
 					if (HIWORD(wparam) == CBN_SELCHANGE || HIWORD(wparam) == CBN_SELENDOK)
 					{
-						PROTOACCOUNT** pAccounts;
-						int iAccCount, i;
-						ProtoEnumAccounts(&iAccCount, &pAccounts);
-						i = SendMessage(GetDlgItem(hdlg, IDC_PROTO), CB_GETITEMDATA, (WPARAM)SendMessage(GetDlgItem(hdlg, IDC_PROTO), CB_GETCURSEL, 0, 0), 0);
-						acs->szProto = pAccounts[i]->szModuleName;
+						acs->szProto = (char*)SendDlgItemMessage(hdlg, IDC_PROTO, CB_GETITEMDATA, (WPARAM)SendDlgItemMessage(hdlg, IDC_PROTO, CB_GETCURSEL, 0, 0), 0);
 						// TODO remember last setting for each proto?
 						AddContactDlgOpts(hdlg, acs->szProto);
 					}
@@ -366,6 +391,7 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 		case WM_DESTROY:
 			CallService(MS_SKIN2_RELEASEICON, (WPARAM)SendMessage(hdlg, WM_SETICON, ICON_BIG, (LPARAM)NULL), 0);
 			CallService(MS_SKIN2_RELEASEICON, (WPARAM)SendMessage(hdlg, WM_SETICON, ICON_SMALL, (LPARAM)NULL), 0);
+			ImageList_Destroy((HIMAGELIST)SendDlgItemMessage(hdlg, IDC_PROTO, CBEM_GETIMAGELIST, 0, 0));
 			acs = (ADDCONTACTSTRUCT*)GetWindowLongPtr(hdlg, GWLP_USERDATA);
 			if (acs)
 			{

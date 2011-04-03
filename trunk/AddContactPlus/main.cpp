@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "addcontactplus.h"
 
 HINSTANCE hInst;
-PLUGINLINK *pluginLink;
+PLUGINLINK* pluginLink;
 static HANDLE hModulesLoaded = 0, hChangedIcons = 0, hAccListChanged = 0,
 			  hMainMenuItem = 0, hToolBarItem = 0, hService = 0;
 HANDLE hIconLibItem;
@@ -98,7 +98,7 @@ static int OnIconsChanged(WPARAM wParam,LPARAM lParam)
 
 static int OnAccListChanged(WPARAM wParam, LPARAM lParam)
 {
-	PROTOACCOUNT **accounts;
+	PROTOACCOUNT** accounts;
 	int proto_count, ProtoCount = 0;
 	DWORD caps;
 
@@ -177,11 +177,16 @@ static int OnModulesLoaded(WPARAM wParam,LPARAM lParam)
 	return 0;
 }
 
-extern "C" int __declspec(dllexport) Load(PLUGINLINK *link)
+extern "C" int __declspec(dllexport) Load(PLUGINLINK* link)
 {
 	pluginLink = link;
-
 	mir_getMMI(&mmi);
+
+	INITCOMMONCONTROLSEX icex = {0};
+	icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
+	icex.dwICC = ICC_USEREX_CLASSES;
+	InitCommonControlsEx(&icex);
+
 	hModulesLoaded = HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
 	hAccListChanged = HookEvent(ME_PROTO_ACCLISTCHANGED, OnAccListChanged);
 	hService = CreateServiceFunction(MS_ADDCONTACTPLUS_SHOW, AddContactPlusDialog);
