@@ -40,7 +40,7 @@ PLUGININFOEX pluginInfo = {
 #elif defined(_UNICODE)
 	"Simple Status Message (Unicode)",
 #else
-	"Simple Status Message",
+	"Simple Status Message (ANSI)",
 #endif
 	PLUGIN_MAKE_VERSION(1, 9, 0, 3),
 	"Provides a simple way to set status and away messages",
