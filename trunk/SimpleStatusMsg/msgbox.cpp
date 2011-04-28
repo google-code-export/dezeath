@@ -148,7 +148,7 @@ HWND WINAPI CreateStatusComboBoxEx(HWND hwndDlg, struct MsgBoxData *data)
 	{
 		if ((Proto_Status2Flag(ID_STATUS_OFFLINE + i) & data->m_iStatusModes) || i == 0)
 		{
-			status_desc = (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, ID_STATUS_OFFLINE + i, GCMDF_TCHAR);
+			status_desc = (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, ID_STATUS_OFFLINE + i, GSMDF_TCHAR);
 			cbei.iItem = j;
 			cbei.pszText = (LPTSTR)status_desc;
 			cbei.cchTextMax = sizeof(status_desc);
@@ -458,15 +458,15 @@ VOID APIENTRY HandlePopupMenu(HWND hwnd, POINT pt, HWND edit_control)
 	if (SendMessage(edit_control, WM_GETTEXTLENGTH, 0, 0) == 0)
 		EnableMenuItem(hmenuTrackPopup, IDM_DELETE, MF_BYCOMMAND | MF_GRAYED);
 
-	if (!ServiceExists(MS_VARS_FORMATSTRING))
-		DeleteMenu(hmenuTrackPopup, 8, MF_BYPOSITION);
-	else
+	if (ServiceExists(MS_VARS_FORMATSTRING))
 		DeleteMenu(hmenuTrackPopup, ID__VARIABLES, MF_BYCOMMAND);
-	
-	if (!ServiceExists(MS_FORTUNEMSG_GETSTATUSMSG))
-		DeleteMenu(hmenuTrackPopup, 7, MF_BYPOSITION);
 	else
+		DeleteMenu(hmenuTrackPopup, 8, MF_BYPOSITION);
+	
+	if (ServiceExists(MS_FORTUNEMSG_GETSTATUSMSG))
 		DeleteMenu(hmenuTrackPopup, ID__FORTUNEAWAYMSG, MF_BYCOMMAND);
+	else
+		DeleteMenu(hmenuTrackPopup, 7, MF_BYPOSITION);
 
 	int m_selection = TrackPopupMenu(hmenuTrackPopup, TPM_LEFTALIGN | TPM_RETURNCMD, pt.x, pt.y, 0, hwnd, NULL);
  	switch (m_selection)
@@ -842,7 +842,7 @@ void ChangeDlgStatus(HWND hwndDlg, struct MsgBoxData *msgbox_data, int iStatus)
 		mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("%s Message (%s)"), (TCHAR*)buff, szProtoName);
 	}
 	else
-		mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("%s Message (%s)"), (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, iStatus, GCMDF_TCHAR), szProtoName);
+		mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("%s Message (%s)"), (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, iStatus, GSMDF_TCHAR), szProtoName);
 	SetWindowText(hwndDlg, szTitle);
 
 	if (iStatus == ID_STATUS_CURRENT)
@@ -972,7 +972,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 					mir_sntprintf(szTitle, SIZEOF(szTitle), szFormat, TranslateT("<current>"), szProtoName);
 			}
 			else
-				mir_sntprintf(szTitle, SIZEOF(szTitle), szFormat, (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, init_data->m_iStatus, GCMDF_TCHAR), szProtoName);
+				mir_sntprintf(szTitle, SIZEOF(szTitle), szFormat, (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, init_data->m_iStatus, GSMDF_TCHAR), szProtoName);
 			SetWindowText(hwndDlg, szTitle);
 
 			int icoStatus = ID_STATUS_OFFLINE;

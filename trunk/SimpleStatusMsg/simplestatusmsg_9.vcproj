@@ -875,6 +875,10 @@
 				>
 			</File>
 			<File
+				RelativePath="res\gotourl.ico"
+				>
+			</File>
+			<File
 				RelativePath="res\history.ico"
 				>
 			</File>
