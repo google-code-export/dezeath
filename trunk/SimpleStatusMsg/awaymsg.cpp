@@ -127,6 +127,7 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 				SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadSkinnedProtoIcon(szProto, dwStatus));
 				EnableWindow(GetDlgItem(hwndDlg, IDC_COPY), FALSE);
 			}
+			Utils_RestoreWindowPosition(hwndDlg, (HANDLE)lParam, "SRAway", "AwayMsgDlg");
 			return TRUE;
 
 		case HM_AWAYMSG:
@@ -141,7 +142,7 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 			bool unicode = !DBGetContactSetting(dat->hContact, "CList", "StatusMsg", &dbv) && 
 				(dbv.type == DBVT_UTF8 || dbv.type == DBVT_WCHAR);
 			DBFreeVariant(&dbv);
-			if (unicode) 
+			if (unicode)
 			{
 				DBGetContactSettingWString(dat->hContact, "CList", "StatusMsg", &dbv);
 				TCHAR *tszMsg = StrNormNewline(dbv.pwszVal);
@@ -157,7 +158,7 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 				mir_free(szMsg);
 			}
 
-			if (ack->lParam && strlen((char*)ack->lParam)) EnableWindow(GetDlgItem(hwndDlg, IDC_COPY), TRUE);
+			if (ack->lParam && *((char*)ack->lParam) != '\0') EnableWindow(GetDlgItem(hwndDlg, IDC_COPY), TRUE);
 			ShowWindow(GetDlgItem(hwndDlg, IDC_RETRIEVING), SW_HIDE);
 			ShowWindow(GetDlgItem(hwndDlg, IDC_MSG), SW_SHOW);
 			SetDlgItemText(hwndDlg, IDOK, TranslateT("&Close"));
@@ -209,6 +210,7 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 
 		case WM_DESTROY:
 			if (dat->hAwayMsgEvent) UnhookEvent(dat->hAwayMsgEvent);
+			Utils_SaveWindowPosition(hwndDlg, dat->hContact, "SRAway", "AwayMsgDlg");
 			WindowList_Remove(hWindowList, hwndDlg);
 			CallService(MS_SKIN2_RELEASEICON, (WPARAM)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)NULL), 0);
 			CallService(MS_SKIN2_RELEASEICON, (WPARAM)SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)NULL), 0);
@@ -460,7 +462,7 @@ static int AwayMsgPreBuildMenu(WPARAM wParam, LPARAM lParam)
 		}
 		DBFreeVariant(&dbv);
 
-		if (DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ShowCopy", 1) && szMsg && lstrlenA(szMsg))
+		if (DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ShowCopy", 1) && szMsg && *szMsg != '\0')
 		{
 			clmi.flags = CMIM_FLAGS | CMIM_NAME | CMIF_TCHAR;
 			mir_sntprintf(str, SIZEOF(str), TranslateT("Copy %s Message"), (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, iStatus, GSMDF_TCHAR));
