@@ -54,6 +54,7 @@ static char *StrNormNewlineA(char *szStr)
 	return szNewStr;
 }
 
+#ifdef _UNICODE
 static TCHAR *StrNormNewline(TCHAR *tszStr)
 {
 	if (tszStr == NULL) return NULL;
@@ -75,6 +76,7 @@ static TCHAR *StrNormNewline(TCHAR *tszStr)
 
 	return tszNewStr;
 }
+#endif
 
 struct AwayMsgDlgData
 {
@@ -348,10 +350,29 @@ static INT_PTR CopyAwayMsgCommand(WPARAM wParam, LPARAM)
 	return 0;
 }
 
+static char *StrFindURL(char *pszStr)
+{
+	char *pszURL = NULL;
+
+	if (pszStr != NULL && *pszStr != '\0')
+	{
+		pszURL = strstr(pszStr, "www.");
+		if (pszURL == NULL)
+			pszURL = strstr(pszStr, "http://");
+		if (pszURL == NULL)
+			pszURL = strstr(pszStr, "https://");
+		if (pszURL == NULL)
+			pszURL = strstr(pszStr, "ftp://");
+	}
+	
+	return pszURL;
+}
+
 static INT_PTR GoToURLMsgCommand(WPARAM wParam, LPARAM lParam)
 {
 	DBVARIANT dbv;
 	char *szMsg;
+
 #ifdef _UNICODE
 	int unicode = !DBGetContactSetting((HANDLE)wParam, "CList", "StatusMsg", &dbv) && (dbv.type == DBVT_UTF8 || dbv.type == DBVT_WCHAR);
 	DBFreeVariant(&dbv);
@@ -368,24 +389,19 @@ static INT_PTR GoToURLMsgCommand(WPARAM wParam, LPARAM lParam)
 	}
 	DBFreeVariant(&dbv);
 
-	if (szMsg && lstrlenA(szMsg))
+	char *szURL = StrFindURL(szMsg);
+	if (szURL != NULL)
 	{
-		char *szURL = strstr(szMsg, "www.");
-		if (szURL == NULL)
-			szURL = strstr(szMsg, "http://");
-		if (szURL != NULL)
-		{
-			int i;
-			for (i = 0; szURL[i] != ' ' && szURL[i] != '\n' && szURL[i] != '\r' &&
-				szURL[i] != '\t' && szURL[i] != '\0'; i++);
+		int i;
+		for (i = 0; szURL[i] != ' ' && szURL[i] != '\n' && szURL[i] != '\r' &&
+			szURL[i] != '\t' && szURL[i] != '\0'; i++);
 
-			char *szMsgURL = (char *)mir_alloc(i + 1);
-			if (szMsgURL)
-			{
-				lstrcpynA(szMsgURL, szURL, i + 1);
-				CallService(MS_UTILS_OPENURL, (WPARAM)1, (LPARAM)szMsgURL);
-				mir_free(szMsgURL);
-			}
+		char *szMsgURL = (char *)mir_alloc(i + 1);
+		if (szMsgURL)
+		{
+			lstrcpynA(szMsgURL, szURL, i + 1);
+			CallService(MS_UTILS_OPENURL, (WPARAM)1, (LPARAM)szMsgURL);
+			mir_free(szMsgURL);
 		}
 	}
 	mir_free(szMsg);
@@ -456,14 +472,7 @@ static int AwayMsgPreBuildMenu(WPARAM wParam, LPARAM lParam)
 
 	if (!iHidden)
 	{
-		char *szURL = NULL;
-		if (DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ShowGoToURL", 1) && szMsg && lstrlenA(szMsg))
-		{
-			szURL = strstr(szMsg, "www.");
-			if (szURL == NULL)
-				szURL = strstr(szMsg, "http://");
-		}
-		if (szURL != NULL)
+		if (DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ShowGoToURL", 1) && StrFindURL(szMsg) != NULL)
 		{
 			clmi.flags = CMIM_FLAGS | CMIM_NAME | CMIF_TCHAR;
 			mir_sntprintf(str, SIZEOF(str), TranslateT("&Go to URL in %s Message"), (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, iStatus, GSMDF_TCHAR));
