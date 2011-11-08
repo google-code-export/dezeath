@@ -761,7 +761,7 @@ void DisplayCharsCount(struct MsgBoxData *dlg_data, HWND hwndDlg)
 		return;
 
 	len = GetDlgItemText(hwndDlg, IDC_EDIT1, msg, SIZEOF(msg));
-	if (DBGetContactSettingByte(NULL, "SimpleStatusMsg", "RemoveCR", 1))
+	if (DBGetContactSettingByte(NULL, "SimpleStatusMsg", "RemoveCR", 0))
 	{
 		int	index, num_lines = SendMessage(GetDlgItem(hwndDlg, IDC_EDIT1), EM_GETLINECOUNT, 0, 0);
 		for (int i = 1; i < num_lines; ++i)
