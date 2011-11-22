@@ -1,7 +1,7 @@
 /*
 
 Simple Status Message plugin for Miranda IM
-Copyright (C) 2006-2010 Bartosz 'Dezeath' Bia³ek, (C) 2005 Harven
+Copyright (C) 2006-2011 Bartosz 'Dezeath' Bia³ek, (C) 2005 Harven
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@ PLUGININFOEX pluginInfo = {
 	"Provides a simple way to set status and away messages",
 	"Bartosz 'Dezeath' Bia³ek, Harven",
 	"dezred"/*antispam*/"@"/*antispam*/"gmail"/*antispam*/"."/*antispam*/"com",
-	"© 2006-2010 Bartosz Bia³ek, © 2005 Harven",
+	"© 2006-2011 Bartosz Bia³ek, © 2005 Harven",
 	"http://code.google.com/p/dezeath",
 	UNICODE_AWARE,
 	DEFMOD_SRAWAY,

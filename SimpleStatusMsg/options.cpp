@@ -1,7 +1,7 @@
 /*
 
 Simple Status Message plugin for Miranda IM
-Copyright (C) 2006-2010 Bartosz 'Dezeath' Bia³ek, (C) 2005 Harven
+Copyright (C) 2006-2011 Bartosz 'Dezeath' Bia³ek, (C) 2005 Harven
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -192,7 +192,7 @@ static INT_PTR CALLBACK DlgOptionsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 
 				data->proto_ok = TRUE;
 
-				index = SendMessage(GetDlgItem(hwndDlg, IDC_CBOPTPROTO), CB_ADDSTRING, 0, (LPARAM)TranslateT("Global"));
+				index = SendMessage(GetDlgItem(hwndDlg, IDC_CBOPTPROTO), CB_ADDSTRING, 0, (LPARAM)TranslateT("Global status change"));
 //				SendMessage(GetDlgItem(hwndDlg, IDC_CBOPTPROTO), CB_SETITEMDATA, index, 0);
 				if (index != CB_ERR && index != CB_ERRSPACE)
 				{
@@ -324,6 +324,7 @@ static INT_PTR CALLBACK DlgOptionsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 
 							if (i == 0)
 							{
+								EnableWindow(GetDlgItem(hwndDlg, IDC_MAXLENGTH), FALSE);
 								EnableWindow(GetDlgItem(hwndDlg, IDC_EMAXLENGTH), FALSE);
 								EnableWindow(GetDlgItem(hwndDlg, IDC_SMAXLENGTH), FALSE);
 								EnableWindow(GetDlgItem(hwndDlg, IDC_ROPTPROTO3), FALSE);
@@ -337,6 +338,7 @@ static INT_PTR CALLBACK DlgOptionsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 							}
 							else
 							{
+								EnableWindow(GetDlgItem(hwndDlg, IDC_MAXLENGTH), TRUE);
 								EnableWindow(GetDlgItem(hwndDlg, IDC_EMAXLENGTH), TRUE);
 								EnableWindow(GetDlgItem(hwndDlg, IDC_SMAXLENGTH), TRUE);
 								EnableWindow(GetDlgItem(hwndDlg, IDC_ROPTPROTO3), TRUE);
