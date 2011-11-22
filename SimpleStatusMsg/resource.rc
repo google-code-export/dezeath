@@ -301,7 +301,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_VISIBLE
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Variables",IDC_STATIC,4,2,300,86,WS_GROUP
+    GROUPBOX        "Variables",IDC_STATIC,4,2,300,100,WS_GROUP
     CONTROL         "Update variables in status messages every",IDC_CUPDATEMSG,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,16,150,8
     EDITTEXT        IDC_ESECUPDTMSG,166,14,32,12,ES_AUTOHSCROLL | ES_NUMBER
@@ -315,6 +315,8 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,25,58,274,8
     CONTROL         "Enable status messages parsing by Variables plugin",IDC_CVARIABLES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,287,8
+    CONTROL         "Exclude %date% token from parsing (restart required)",IDC_CDATEPARSING,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,25,86,274,8
 END
 
 IDD_OPT_ADVANCED DIALOGEX 0, 0, 307, 226
