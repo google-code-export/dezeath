@@ -1934,6 +1934,19 @@ static TCHAR *ParseWinampSong(ARGUMENTSINFO *ai)
 	return ptszWinampTitle;
 }
 
+static TCHAR *ParseDate(ARGUMENTSINFO *ai)
+{
+	TCHAR szStr[128] = {0};
+
+	if (ai->argc != 1)
+		return NULL;
+
+	ai->flags |= AIF_DONTPARSE;
+	GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL, NULL, szStr, SIZEOF(szStr));
+
+	return mir_tstrdup(szStr);
+}
+
 int ICQMsgTypeToStatus(int iMsgType)
 {
 	switch (iMsgType)
@@ -2070,6 +2083,14 @@ static int OnModulesLoaded(WPARAM wParam, LPARAM lParam)
 		tr.parseFunctionT = ParseWinampSong;
 		tr.szHelpText = LPGEN("External Applications\tretrieves song name of the song currently playing in Winamp (Simple Status Message compatible)");
 		CallService(MS_VARS_REGISTERTOKEN, 0, (LPARAM)&tr);
+
+		if (DBGetContactSettingByte(NULL, "SimpleStatusMsg", "ExclDateToken", 0) != 0)
+		{
+			tr.tszTokenString = _T("date");
+			tr.parseFunctionT = ParseDate;
+			tr.szHelpText = LPGEN("Miranda Related\tget the date (Simple Status Message compatible)");
+			CallService(MS_VARS_REGISTERTOKEN, 0, (LPARAM)&tr);
+		}
 	}
 
 /*	if (DBGetContactSettingByte(NULL, "SimpleStatusMsg", "AmpLeaveTitle", 1))*/ {
